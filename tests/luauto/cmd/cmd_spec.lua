@@ -7,27 +7,32 @@ describe("The `luauto.cmd` module", function()
     pending("which accepts a table with a certain shape", function()
     end)
 
-    pending("which can create a single autocommand given a table", function()
-      auto.cmd.add {
+    it("which can create a single autocommand given a table", function()
+      local id = auto.cmd.add {
         cb = function()
           vim.notify "Hello!"
         end,
         on = "BufEnter",
       }
-    end)
-
-    pending("which can create multiple autocommands given a list of tables", function()
+      assert.is_truthy(id)
+      assert.is_true(type(id) == "number")
     end)
   end)
 
   describe("has a function \"create\"", function()
     pending("which is an alias for the \"add\" function", function()
+      assert.are.equal(auto.cmd.create, auto.cmd.add)
     end)
   end)
 
   describe("has a function \"get\"", function()
+    pending("that returns a list of autocommands matching some criteria", function()
+    end)
   end)
 
   describe("has a function \"del\"", function()
+    pending("that deletes an autocommand given its id", function()
+      
+    end)
   end)
 end)
