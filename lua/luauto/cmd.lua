@@ -38,6 +38,16 @@ function M.add(tbl)
   -- true if present and false if not present
   assert((cmd and true or false) ~= (cb and true or false), "expects either a callback or command but not both")
 
+  return api.create(tbl.on, {
+    group = tbl.group,
+    -- TODO: pattern
+    -- TODO: buffer
+    desc = tbl.desc,
+    callback = cb,
+    command = cmd,
+    once = tbl.once,
+    nested = tbl.nested,
+  })
 end
 
 
