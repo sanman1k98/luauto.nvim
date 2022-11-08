@@ -9,6 +9,21 @@ local api = {
 
 
 function M.add(tbl)
+  if type(tbl) ~= "table" then error("expects a table as an argument", 2) end
+  local cmd = tbl[1] or tbl.cmd or tbl.command
+  local cb = tbl.cb or tbl.callback
+  vim.validate {
+    on = { tbl.on, {"s", "t"} },
+    command = { cmd, "s", true },
+    callback = { cb, {"s", "f"}, true },
+    group = { tbl.group, {"s", "n"}, true },
+    description = { tbl.desc, "s", true },
+    once = { tbl.once, "b", true },
+    nested = { tbl.nested, "b", true },
+  }
+  -- true if present and false if not present
+  assert((cmd and true or false) ~= (cb and true or false), "expects either a callback or command but not both")
+
 end
 
 
