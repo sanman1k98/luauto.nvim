@@ -3,7 +3,7 @@ local api = {
 }
 
 
-local operations = {
+local methods = {
   exec = function(self, data, opts)
     opts = opts or {}
     opts.data = data
@@ -13,19 +13,20 @@ local operations = {
 }
 
 
-local pattern = function(tbl, key)
-  assert(getmetatable(tbl), "it should already have a metatable")
-  return rawset(tbl, "_pattern", key)
+local pattern = function(event_tbl, key)
+  return rawset(event_tbl, "_pattern", key)
 end
 
 
 --- Creates and returns a table which can access functions as methods.
 ---@return table: 
-local event = function(key)
-  return setmetatable({ _event = key }, {
-    __index = function(self, k)
-      if operations[k] then return operations[k]
-      else return pattern(self, k) end
+local event = function(name)
+  return setmetatable({ _event = name }, {
+    __index = function(self, key)
+      local method = methods[key]
+      if method then
+        return method
+      else return pattern(self, key) end
     end,
   })
 end
