@@ -1,14 +1,20 @@
-local api = {
-  exec = vim.api.nvim_exec_autocmds,
-}
 
-
+-- TODO: validate parameters
 local methods = {
   exec = function(self, data, opts)
     opts = opts or {}
     opts.data = data
-    opts.pattern = self._pattern
-    api.exec(self._event, opts)
+    opts.pattern = rawget(self, "_pattern")
+    vim.api.nvim_exec_autocmds(self._event, opts)
+  end,
+  get = function(self, opts)
+    opts = opts or {}
+    opts.event = self._event
+    opts.pattern = rawget(self, "_pattern")
+    return vim.api.nvim_get_autocmds(opts)
+  end,
+  patterns = function(self, tbl)
+    return rawset(self, "_pattern", tbl)
   end,
 }
 
