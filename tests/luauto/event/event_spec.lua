@@ -58,7 +58,6 @@ describe("The `luauto.event` module", function()
       it("with fields `_event` and `_pattern` containing the keys used to index it", function()
         local key1, key2 = "User", "custom_event"
         local tbl = auto.event[key1][key2]
-        print(tbl)
         assert.is_equal(key1, tbl._event)
         assert.is_equal(key2, tbl._pattern)
       end)
@@ -70,15 +69,26 @@ describe("The `luauto.event` module", function()
           mock.clear(api)
         end)
 
-        it("execute autocommands", function()
+        it("execute autocommands matching event", function()
           assert.has_no.errors(function()
-            print(auto.event.user.testing)
+            auto.event.user.exec()
+          end)
+          assert.spy(api.nvim_exec_autocmds).was_called_with("user")
+        end)
+
+        it("execute autocommands matching event and pattern", function()
+          assert.has_no.errors(function()
             auto.event.user.testing:exec()
           end)
           assert.spy(api.nvim_exec_autocmds).was_called_with("user", match.is_same { pattern = "testing" })
         end)
 
-        pending("get autocommands", function()
+        it("get autocommands", function()
+          local user_events
+          assert.has_no.errors(function()
+            user_events = auto.event.user:get()
+          end)
+          assert.spy(api.nvim_get_autocmds).was_called_with(match.is_same { event = "user" })
         end)
 
         pending("clear autocommands", function()
