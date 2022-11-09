@@ -13,21 +13,25 @@ local methods = {
 }
 
 
-local pattern = function(event_tbl, key)
-  return rawset(event_tbl, "_pattern", key)
+local event_pattern = function(event, pat)
+  return setmetatable({ _event = event, _pattern = pat }, {
+    __index = function(_, key)
+      if key == "patterns" then error("cannot call method `patterns` on this table", 2)
+      else return methods[key] end
+    end,
+    __call = methods.exec,
+  })
 end
 
 
 --- Creates and returns a table which can access functions as methods.
 ---@return table: 
-local event = function(name)
-  return setmetatable({ _event = name }, {
-    __index = function(self, key)
-      local method = methods[key]
-      if method then
-        return method
-      else return pattern(self, key) end
+local event = function(event)
+  return setmetatable({ _event = event }, {
+    __index = function(_, key)
+      return methods[key] or event_pattern(event, key)
     end,
+    __call = methods.exec,
   })
 end
 
