@@ -75,7 +75,7 @@ describe("The `luauto.event` module", function()
             print(auto.event.user.testing)
             auto.event.user.testing:exec()
           end)
-          assert.spy(api.nvim_exec_autocmds).was_called_with("user", { pattern = "testing" })
+          assert.spy(api.nvim_exec_autocmds).was_called_with("user", match.is_same { pattern = "testing" })
         end)
 
         pending("get autocommands", function()
