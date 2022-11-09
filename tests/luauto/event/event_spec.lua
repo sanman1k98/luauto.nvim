@@ -1,4 +1,5 @@
 local spy = require "luassert.spy"
+local mock = require "luassert.mock"
 local match = require "luassert.match"
 
 local print = vim.pretty_print
@@ -63,13 +64,18 @@ describe("The `luauto.event` module", function()
       end)
 
       describe("which can be used to", function()
-        pending("execute autocommands", function()
-          local s = spy.on(vim.api, "nvim_exec_autocmds")
+        local api = mock(vim.api)
+
+        after_each(function()
+          mock.clear(api)
+        end)
+
+        it("execute autocommands", function()
           assert.has_no.errors(function()
             print(auto.event.user.testing)
             auto.event.user.testing:exec()
           end)
-          assert.spy(s).was_called_with("user", { pattern = "testing" })
+          assert.spy(api.nvim_exec_autocmds).was_called_with("user", { pattern = "testing" })
         end)
 
         pending("get autocommands", function()
@@ -78,6 +84,8 @@ describe("The `luauto.event` module", function()
         pending("clear autocommands", function()
         end)
 
+        pending("assign to a variable and execute autocommands", function()
+        end)
       end)
     end)
   end)
