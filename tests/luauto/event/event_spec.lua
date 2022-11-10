@@ -71,9 +71,10 @@ describe("The `luauto.event` module", function()
 
         it("execute autocommands matching event", function()
           assert.has_no.errors(function()
-            auto.event.user.exec()
+            auto.event.user:exec()
           end)
-          assert.spy(api.nvim_exec_autocmds).was_called_with("user")
+          assert.spy(api.nvim_exec_autocmds).was_called()
+          assert.spy(api.nvim_exec_autocmds).was_called_with("user", match.is_same {})
         end)
 
         it("execute autocommands matching event and pattern", function()
