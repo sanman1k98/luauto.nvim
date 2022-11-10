@@ -5,28 +5,49 @@ local methods = {
     opts = opts or {}
     opts.data = data
     opts.pattern = rawget(self, "_pattern")
+    opts.buffer = rawget(self, "_buffer")
     vim.api.nvim_exec_autocmds(self._event, opts)
   end,
   get = function(self, opts)
     opts = opts or {}
     opts.event = self._event
     opts.pattern = rawget(self, "_pattern")
+    opts.buffer = rawget(self, "_buffer")
     return vim.api.nvim_get_autocmds(opts)
-  end,
-  patterns = function(self, tbl)
-    return rawset(self, "_pattern", tbl)
   end,
 }
 
 
-local event_pattern = function(event, pat)
+local pattern_tbl = function(event, pat)
   return setmetatable({ _event = event, _pattern = pat }, {
-    __index = function(_, key)
-      if key == "patterns" then error("cannot call method `patterns` on this table", 2)
-      else return methods[key] end
-    end,
+    __index = methods,
     __call = methods.exec,
   })
+end
+
+
+local buffer_tbl = function(event, buf)
+  return setmetatable({ _event = event, _buffer = buf }, {
+    __index = methods,
+    __call = methods.exec
+  })
+end
+
+
+local accessor_tbl = function(event, key)
+  if key == "buffer" or key == "buf" then
+    return setmetatable({}, {
+      __index = function(_, buf) return buffer_tbl(event, buf) end,
+      __call = function(_, buflist) return buffer_tbl(event, buflist) end,
+    })
+  elseif key == "pattern" or key == "pat" then
+    return setmetatable({}, {
+      __index = function(_, pat) return pattern_tbl(event, pat) end,
+      __call = function(_, patterns) return pattern_tbl(event, patterns) end,
+    })
+  else
+    return pattern_tbl(event, key)
+  end
 end
 
 
@@ -35,7 +56,7 @@ end
 local event = function(event)
   return setmetatable({ _event = event }, {
     __index = function(_, key)
-      return methods[key] or event_pattern(event, key)
+      return methods[key] or accessor_tbl(event, key)
     end,
     __call = methods.exec,
   })
