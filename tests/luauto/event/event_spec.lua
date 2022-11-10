@@ -34,12 +34,25 @@ describe("The `luauto.event` module", function()
       assert.is_equal(tbl._event, key)
     end)
 
+    it("whose `pattern` field can be called with a table as an argument", function()
+      local tbl = auto.event.user.pattern {
+        "one",
+        "two",
+        "three",
+      }
+      assert.is_truthy(tbl._pattern)
+      assert.is_true(type(tbl._pattern) == "table")
+      assert.is_true(vim.tbl_islist(tbl._pattern))
+    end)
+
     it("which can also be indexed", function()
-      local tbl
+      local t1, t2
       assert.has_no.errors(function()
-        tbl = auto.event.user.custom_event
+        t1 = auto.event.user.custom_event
+        t2 = auto.event.user.pattern.custom_event
       end)
-      assert.is_true(type(tbl) == "table")
+      assert.is_true(type(t1) == "table")
+      assert.is_true(type(t2) == "table")
     end)
   end)
 
@@ -52,12 +65,15 @@ describe("The `luauto.event` module", function()
       assert.has_no.errors(function()
         local value = auto.event["User"]["custom_event"]
       end)
+      assert.has_no.errors(function()
+        local value = auto.event["User"].pat["custom_event"]
+      end)
     end)
 
     describe("and returns a table", function()
       it("with fields `_event` and `_pattern` containing the keys used to index it", function()
         local key1, key2 = "User", "custom_event"
-        local tbl = auto.event[key1][key2]
+        local tbl = auto.event[key1].pattern[key2]
         assert.is_equal(key1, tbl._event)
         assert.is_equal(key2, tbl._pattern)
       end)
