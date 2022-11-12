@@ -22,6 +22,7 @@ local api = {
 ---@field once boolean: run the autocommand only once; defaults to false
 ---@field nested boolean: run nested autocommands; defaults to false
 ---@return number: integer id of the created autocommand
+---@see nvim_create_autocmd()
 function M.add(tbl)
   if type(tbl) ~= "table" then error("expects a table as an argument", 2) end
   local cmd = tbl[1] or tbl.cmd or tbl.command
@@ -53,6 +54,7 @@ end
 
 --- Delete an autocommand given its id.
 ---@param id number: id of the autocommand to delete
+---@see nvim_del_autocmd()
 function M.del(id)
 end
 
@@ -64,6 +66,7 @@ end
 ---@field pattern string|table: pattern(s); cannot be used with buffer
 ---@field buffer number|table: buffer number(s); cannot be used with pattern
 ---@return table: a list of autocommands matching the criteria
+---@see nvim_get_autocmds()
 function M.get(opts)
 end
 
@@ -75,12 +78,13 @@ end
 ---@field pattern string|table: pattern(s); cannot be used with buffer
 ---@field buffer number|table: buffer number(s); cannot be used with pattern
 ---@return table: a list of autocommands matching the criteria
+---@see nvim_clear_autocmds()
 function M.clear(opts)
 end
 
 
 do
-  M.create = M.add
+  M.create, M.new = M.add, M.add
 
   setmetatable(M, {
     __call = M.add,
