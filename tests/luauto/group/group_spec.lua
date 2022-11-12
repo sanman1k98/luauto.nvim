@@ -1,3 +1,8 @@
+local auto = {
+  group = require "luauto.group"
+}
+local print = vim.pretty_print
+
 describe("The `luauto.group` module", function()
   local auto = {
     group = require "luauto.group",
@@ -35,19 +40,53 @@ describe("The `luauto.group` module", function()
         assert.is_true(type(autocmd_id) == "number")
       end)
 
-      pending("get a list of autcommands in a group", function()
+      pending("add multiple autocommands to a group", function()
       end)
 
-      pending("delete a group", function()
+      it("get a list of autcommands in a group", function()
+        local cmds = auto.group.testing:cmds()
+        assert.is_true(#cmds > 0)
       end)
 
-      pending("clear a group", function()
+      it("clear a group", function()
+        assert.is_true(#auto.group.testing:cmds() > 0)
+        auto.group.testing:clear()
+        assert.is_equal(#auto.group.testing:cmds(), 0)
+      end)
+
+      it("delete a group", function()
+        local old_id = auto.group.testing.id
+        auto.group.testing:del()
+        local new_id = auto.group.testing.id
+        assert.is_not.equal(old_id, new_id)
       end)
 
       it("get the group's id", function()
         local group_id = auto.group.testing.id
         local also_group_id = vim.api.nvim_create_augroup("testing", { clear = false })
         assert.are_equal(group_id, also_group_id)
+      end)
+
+      it("assign to a local variable and add autocommands", function()
+        local fn = function() vim.notify "Testing!" end
+        local aug = auto.group.testing
+        aug:add {
+          on = "BufEnter",
+          cb = fn,
+          desc = "testing groups one",
+        }
+        aug:add {
+          on = "BufEnter",
+          cb = fn,
+          desc = "testing groups two",
+        }
+        aug:add {
+          on = "BufEnter",
+          cb = fn,
+          desc = "testing groups three",
+        }
+        assert.is_true(#aug:cmds() >= 3)
+        assert.is_true(#auto.group.testing:cmds() >= 3)
       end)
     end)
   end)
