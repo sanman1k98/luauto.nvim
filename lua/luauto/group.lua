@@ -1,4 +1,4 @@
-local cmd = require "luauto.cmd"
+local au = require "luauto.cmd"
 
 
 
@@ -8,12 +8,12 @@ local group_mt = {
   ---@see `luauto.cmd.add`
   add = function(self, opts)
     if type(opts) ~= "table" then error("expects a table as an argument", 2) end
-    opts.group = self._name
-    return cmd.add(opts)
+    opts.group = self.name
+    return au.add(opts)
   end,
 
   clear = function(self)
-    vim.api.nvim_create_augroup(self._name, { clear = true })
+    vim.api.nvim_create_augroup(self.name, { clear = true })
     return self
   end,
 
@@ -28,7 +28,7 @@ local group_mt = {
   cmds = function(self, opts)
     opts = opts or {}
     opts.group = self.id
-    return cmd.get(opts)
+    return au.get(opts)
   end,
 }
 
@@ -41,7 +41,7 @@ local group = function(name)
   local id = vim.api.nvim_create_augroup(name, { clear = false })
   return setmetatable({
     id = id,
-    _name = name,
+    name = name,
   }, {
     __index = group_mt,
   })

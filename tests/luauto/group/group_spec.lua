@@ -11,11 +11,11 @@ describe("The `luauto.group` module", function()
 
 
   describe("when indexed by a group name returns a table", function()
-    it("containing `id` and `_name` fields", function()
+    it("containing `id` and `name` fields", function()
       local group_table = auto.group.user_group
       assert.is_truthy(group_table)
       assert.is_truthy(group_table.id)
-      assert.is_truthy(group_table._name)
+      assert.is_truthy(group_table.name)
     end)
 
     it("with a metavalue `__index`", function()
