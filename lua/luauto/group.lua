@@ -1,10 +1,5 @@
 local cmd = require "luauto.cmd"
 
-local api = {
-  create = vim.api.nvim_create_augroup,
-  del_by_id = vim.api.nvim_del_augroup_by_id,
-  clear = vim.api.nvim_clear_autocmds,
-}
 
 
 local group_mt = {
@@ -18,18 +13,19 @@ local group_mt = {
   end,
 
   clear = function(self)
-    api.create(self._name, { clear = true })
+    vim.api.nvim_create_augroup(self._name, { clear = true })
+    return self
   end,
 
   del = function(self)
-    api.del_by_id(self.id)
+    vim.api.nvim_del_augroup_by_id(self.id)
   end,
 
   --- Get a list of autocommands in this group.
   ---@param opts table: a dictionary containing other criteria to match against
   ---@return table: a list of autocommands matching the criteria
   ---@see `luauto.cmd.get`
-  get_cmds = function(self, opts)
+  cmds = function(self, opts)
     opts = opts or {}
     opts.group = self.id
     return cmd.get(opts)
@@ -42,7 +38,7 @@ local group_mt = {
 ---@return table: a table to manage an autogroup
 ---@see $VIMEUNTIME/lua/vim/_meta.lua for inspiring this implementation
 local group = function(name)
-  local id = api.create(name, { clear = false })
+  local id = vim.api.nvim_create_augroup(name, { clear = false })
   return setmetatable({
     id = id,
     _name = name,
