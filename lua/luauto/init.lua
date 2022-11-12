@@ -1,3 +1,6 @@
+local M = {}
+
+
 --- Copied from folke/noice.nvim
 ---@see https://github.com/folke/noice.nvim/blob/3489e57e198e4b161169a538d2bd71e018de41d0/lua/noice/util/lazy.lua
 local lazy_load = function(module)
@@ -27,8 +30,11 @@ local lazy_load = function(module)
 end
 
 
-return {
-  cmd = lazy_load("luauto.cmd"),
-  group = lazy_load("luauto.group"),
-  event = lazy_load("luaauto.event"),
-}
+M.cmd = lazy_load("luauto.cmd")
+M.group = lazy_load("luauto.group")
+M.event = lazy_load("luaauto.event")
+
+
+return setmetatable(M, {
+  __call = M.cmd.new,
+})
