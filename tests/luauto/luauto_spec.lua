@@ -13,6 +13,7 @@ describe("The `luauto` module", function()
   it("can declaratively add an autocommand to an autogroup", function()
     local test
     assert.has_no.errors(function()
+      au.group.testing:clear()      -- will create augroup if it doesn't exist
       test = au.group.testing:add {
         on = "BufEnter",
         cb = function() vim.notify "Hello! Testing!" end,
@@ -28,7 +29,6 @@ describe("The `luauto` module", function()
     local contains_test = false
     for _, c in ipairs(cmds) do
       if c.id == test then
-        print(c)
         contains_test = true
         break
       end
