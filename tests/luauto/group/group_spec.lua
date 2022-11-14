@@ -16,18 +16,24 @@ describe("The `luauto.group` module", function()
 
 
   describe("when indexed by a group name returns a table", function()
-    it("containing `id` and `name` fields", function()
-      local group_table = auto.group.user_group
-      assert.is_truthy(group_table)
-      assert.is_truthy(group_table.id)
-      assert.is_truthy(group_table.name)
+    it("containing read-only `id` and `name` fields", function()
+      local grp = auto.group.testing
+      assert.is_truthy(grp)
+      assert.is_true(type(grp) == "table")
+      assert.is_truthy(grp.id)
+      assert.is_true(type(grp.id) == "number")
+      assert.is_truthy(grp.name)
+      assert.is_true(type(grp.name) == "string")
+      assert.has_error(function()
+        grp.id = 69
+      end)
     end)
 
-    it("with a metavalue `__index`", function()
+    it("with a metamethod `__index`", function()
       local mt = getmetatable(auto.group.user_group)
       assert.is_truthy(mt)
       assert.is_truthy(mt.__index)
-      assert.is_true(type(mt.__index) == "table")
+      assert.is_true(type(mt.__index) == "function")
     end)
 
     describe("which can be used to", function()
