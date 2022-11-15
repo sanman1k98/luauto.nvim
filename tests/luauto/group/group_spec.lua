@@ -38,26 +38,33 @@ describe("The `luauto.group` module", function()
 
     describe("which can be used to", function()
       it("add an autocommand to a group", function()
-        local autocmd_id = auto.group.testing:add {
-          cb = function() vim.notify "Testing!" end,
-          on = "BufEnter",
-        }
+        local autocmd_id = auto.group.testing:add("BufEnter",{
+          callback = function() vim.notify "Testing!" end,
+        })
         assert.is_truthy(autocmd_id)
         assert.is_true(type(autocmd_id) == "number")
       end)
 
-      pending("add multiple autocommands to a group", function()
+      it("add multiple autocommands to a group", function()
+        local aug = auto.group.testing
+        local fn = function() vim.notify "Entering!" end
+        aug {
+          { "VimEnter", { callback = fn, desc = "autocmd 1", } },
+          { "BufEnter", { callback = fn, desc = "autocmd 2", } },
+          { "InsertEnter", { callback = fn, desc = "autocmd 3", } },
+        }
+        assert.is_true(#aug.cmds >= 3)
       end)
 
       it("get a list of autcommands in a group", function()
-        local cmds = auto.group.testing:cmds()
+        local cmds = auto.group.testing.cmds
         assert.is_true(#cmds > 0)
       end)
 
       it("clear a group", function()
-        assert.is_true(#auto.group.testing:cmds() > 0)
+        assert.is_true(#auto.group.testing:get_cmds() > 0)
         auto.group.testing:clear()
-        assert.is_equal(#auto.group.testing:cmds(), 0)
+        assert.is_equal(#auto.group.testing.cmds, 0)
       end)
 
       it("delete a group", function()
@@ -76,23 +83,20 @@ describe("The `luauto.group` module", function()
       it("assign to a local variable and add autocommands", function()
         local fn = function() vim.notify "Testing!" end
         local aug = auto.group.testing
-        aug:add {
-          on = "BufEnter",
-          cb = fn,
+        aug:add("BufEnter", {
+          callback = fn,
           desc = "testing groups one",
-        }
-        aug:add {
-          on = "BufEnter",
-          cb = fn,
+        })
+        aug:add("BufEnter", {
+          callback = fn,
           desc = "testing groups two",
-        }
-        aug:add {
-          on = "BufEnter",
-          cb = fn,
+        })
+        aug:add("BufEnter", {
+          callback = fn,
           desc = "testing groups three",
-        }
-        assert.is_true(#aug:cmds() >= 3)
-        assert.is_true(#auto.group.testing:cmds() >= 3)
+        })
+        assert.is_true(#aug.cmds >= 3)
+        assert.is_true(#auto.group.testing.cmds >= 3)
       end)
     end)
   end)
