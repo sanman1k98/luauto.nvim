@@ -1,7 +1,6 @@
 local M = {}
-local Group, GroupProxy = {}, {}
-local mem = setmetatable({}, { __mode = "v" })    -- stores objects by group name
-local info = setmetatable({}, { __mode = "k" })
+local Group = {}
+local info = setmetatable({}, { __mode = "k" }) -- private attributes
 
 local au = require "luauto.cmd"
 
@@ -115,44 +114,6 @@ end
 
 --- Shorthand for creating a number of autocommands in a group.
 function Group:__call(...)
-  return Group.define(self, ...)
-end
-
-
-function GroupProxy:get(aug_name)
-  if M[aug_name] then return M[aug_name] end
-  local proxy = {}
-  M[aug_name] = proxy
-  info[proxy] = aug_name
-  return setmetatable(proxy, self)
-end
-
-
-function GroupProxy:__index(k)
-  if k == "id" then
-    return Group.id(self)
-  elseif k == "name" then
-    return Group.name(self)
-  elseif k == "cmds" then
-    return Group.get_cmds(self)
-  else
-    local v = Group[k]
-    rawset(self, k, v)
-    return v
-  end
-end
-
-
-function GroupProxy:__newindex(k, v)
-  if k == "id" or k == "name" or k == "cmds" then
-    error("attempting to modify a read-only field", 2)
-  else
-    rawset(self, k, v)
-  end
-end
-
-
-function GroupProxy:__call(...)
   return Group.define(self, ...)
 end
 
