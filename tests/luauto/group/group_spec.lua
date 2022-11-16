@@ -48,7 +48,7 @@ describe("The `luauto.group` module", function()
         assert.is_true(type(autocmd_id) == "number")
       end)
 
-      it("add multiple autocommands to a group", function()
+      pending("add multiple autocommands to a group return their ids", function()
         local aug = auto.group.testing
         local fn = function() vim.notify "Entering!" end
         aug {
