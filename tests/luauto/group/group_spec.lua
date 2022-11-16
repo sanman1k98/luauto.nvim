@@ -25,6 +25,9 @@ describe("The `luauto.group` module", function()
       assert.is_truthy(grp.name)
       assert.is_true(type(grp.name) == "string")
       assert.has_error(function()
+        grp.name = "nice"
+      end)
+      assert.has_error(function()
         grp.id = 69
       end)
     end)
@@ -53,18 +56,18 @@ describe("The `luauto.group` module", function()
           { "BufEnter", { callback = fn, desc = "autocmd 2", } },
           { "InsertEnter", { callback = fn, desc = "autocmd 3", } },
         }
-        assert.is_true(#aug.cmds >= 3)
+        assert.is_true(#aug:get_cmds() >= 3)
       end)
 
       it("get a list of autcommands in a group", function()
-        local cmds = auto.group.testing.cmds
+        local cmds = auto.group.testing:get_cmds()
         assert.is_true(#cmds > 0)
       end)
 
       it("clear a group", function()
         assert.is_true(#auto.group.testing:get_cmds() > 0)
         auto.group.testing:clear()
-        assert.is_equal(#auto.group.testing.cmds, 0)
+        assert.is_equal(#auto.group.testing:get_cmds(), 0)
       end)
 
       it("delete a group", function()
@@ -95,8 +98,8 @@ describe("The `luauto.group` module", function()
           callback = fn,
           desc = "testing groups three",
         })
-        assert.is_true(#aug.cmds >= 3)
-        assert.is_true(#auto.group.testing.cmds >= 3)
+        assert.is_true(#aug:get_cmds() >= 3)
+        assert.is_true(#auto.group.testing:get_cmds() >= 3)
       end)
     end)
   end)
