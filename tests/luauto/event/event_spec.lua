@@ -38,7 +38,7 @@ describe("The `luauto.event` module", function()
       it("add autocmds on event", function()
         local id
         assert.has_no.errors(function()
-          id = au.event.VimEnter:add {
+          id = au.event.VimEnter:create_cmd {
             callback = function() vim.notify "Welcome! Testing!" end,
             desc = "an autocmd created for testing purposes",
             once = true,
@@ -48,7 +48,7 @@ describe("The `luauto.event` module", function()
       end)
 
       it("get autocmds matching the event", function()
-        local cmds = au.event.VimEnter.cmds
+        local cmds = au.event.VimEnter:get_cmds()
         assert.is_true(#cmds > 0)
       end)
 

@@ -1,36 +1,18 @@
-local Event, EventProxy = {}, {}
-local mem = setmetatable({}, { __mode = "k" })
+local M = {}
+local Event = {}
 local info = setmetatable({}, { __mode = "v" })
 
 local au = require "luauto.cmd"
 
 
---- Add a new autocommand on this event.
----@param opts table: a dictionary of opts representing an autocommand
----@field cmd string?: 
----@field cb string|function|nil:
----@field NAME TYPE: DESC
----@field NAME TYPE: DESC
----@field NAME TYPE: DESC
----@field NAME TYPE: DESC
-function Event:add(opts)
-  local event = info[self]
-  return vim.api.nvim_create_autocmd(event, opts)
+function Event:_proxy(name)
+  local proxy = {}
+  info[proxy] = name
+  return setmetatable(proxy, self)
 end
 
 
---- Add a new callback to this event.
-function Event:cb(callback, opts)
-  opts = opts or {}
-  opts.callback = callback
-  return vim.api.nvim_create_autocmd(info[self], opts)
-end
-
-
---- Add a command to this event.
-function Event:cmd(command, opts)
-  opts = opts or {}
-  opts.command = command
+function Event:create_cmd(opts)
   return vim.api.nvim_create_autocmd(info[self], opts)
 end
 
@@ -59,7 +41,7 @@ end
 
 
 --- Get or set the the ignore setting for this event.
-function Event:get_ignore()
+function Event:is_ignored()
   for _, event in ipairs(vim.opt.eventignore:get()) do
     event = string.lower(event)
     if event == info[self] then
@@ -76,29 +58,16 @@ function Event:set_ignore(flag)
 end
 
 
---- Get the event name
-function Event:name()
+function Event:get_name()
   return info[self]
 end
 
 
-function EventProxy:get(event_name)
-  event_name = event_name:lower()   -- event names are case-insensitive
-  if mem[event_name] then return mem[event_name] end
-  local proxy = {}
-  mem[event_name] = proxy
-  info[proxy] = event_name
-  return setmetatable(proxy, self)
-end
-
-
-function EventProxy:__index(k)
+function Event:__index(k)
   if k == "name" then
-    return Event.name(self)
-  elseif k == "cmds" then
-    return Event.get_cmds(self)
+    return Event.get_name(self)
   elseif k == "ignore" then
-    return Event.get_ignore(self)
+    return Event.is_ignored(self)
   else
     local v = Event[k]
     rawset(self, k, v)
@@ -107,8 +76,8 @@ function EventProxy:__index(k)
 end
 
 
-function EventProxy:__newindex(k, v)
-  if k == "name" or k == "cmds" then
+function Event:__newindex(k, v)
+  if k == "name" then
     error("attempting to modify a read-only field", 2)
   elseif k == "ignore" then
     Event.set_ignore(self, v)
@@ -118,8 +87,27 @@ function EventProxy:__newindex(k, v)
 end
 
 
-return setmetatable({}, {
-  __index = function(_, event)
-    return EventProxy:get(event)
+--- Shorthand for creating an autocommand for the event.
+function Event:__call(...)
+  return Event.create_cmd(...)
+end
+
+
+--- Index this module by event names, which are case-insensitive.
+return setmetatable(M, {
+  --- Contains logic for search and accessing values with case-insensitive
+  --- keys.
+  __index = function(self, key)
+    local proxy = rawget(self, key:lower())   -- see what's at lowercased-key
+    if proxy then                             -- if there's something there then,
+      rawset(self, key, proxy)                -- set this key's value to what's at lowercased-key
+      return proxy                            -- return the value
+    else                                      -- if there's nothing there then,
+      proxy = Event:_proxy(key:lower())        -- create a value
+      rawset(self, key:lower(), proxy)        -- set the lowercased-key to the new value
+      rawset(self, key, proxy)                -- set the original key to the new value too, since we might access it again this way
+      return proxy                            -- return the value
+    end
   end,
+  __mode = "v",
 })
