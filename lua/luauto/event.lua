@@ -40,7 +40,6 @@ function Event:clear(opts)
 end
 
 
---- Get or set the the ignore setting for this event.
 function Event:is_ignored()
   for _, event in ipairs(vim.opt.eventignore:get()) do
     event = string.lower(event)
@@ -89,7 +88,7 @@ end
 
 --- Shorthand for creating an autocommand for the event.
 function Event:__call(...)
-  return Event.create_cmd(...)
+  return Event.create_cmd(self, ...)
 end
 
 
