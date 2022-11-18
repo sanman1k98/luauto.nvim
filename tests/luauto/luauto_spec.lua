@@ -1,89 +1,225 @@
-local au = require "luauto"
+local luauto = require "luauto"
+
+local truthy = assert.is_truthy
+local falsy = assert.is_falsy
+local works = assert.has_no.errors
+local stops_working = assert.has_errors
+local same = assert.are_same              -- deep comparison
+local eq = assert.is_equal                -- compare by value or by reference
+
 local api = vim.api
-local print = vim.pretty_print
+local pp = vim.pretty_print
 
 
-describe("The `luauto` module", function()
-  it("has the following fields", function()
-    assert.is_truthy(au.cmd)
-    assert.is_truthy(au.group)
-    assert.is_truthy(au.event)
+
+describe("has submodules", function()
+  it("`cmd`", function()
+    truthy(luauto.cmd)
   end)
 
-  it("can declaratively add an autocommand to an autogroup", function()
-    local test
-    assert.has_no.errors(function()
-      au.group.testing:clear()      -- will create augroup if it doesn't exist
-      test = au.group.testing:cmd("BufEnter", {
-        callback = function() vim.notify "Hello! Testing!" end,
-        once = true,
-        desc = "Created for testing",
-      })
-    end)
-    assert.is_true(type(test) == "number")
-    local cmds = api.nvim_get_autocmds {
-      group = "testing",
-      event = "BufEnter",
-    }
-    local contains_test = false
-    for _, c in ipairs(cmds) do
-      if c.id == test then
-        contains_test = true
-        break
-      end
-    end
-    assert.is_true(contains_test)
+  it("`group`", function()
+    truthy(luauto.group)
   end)
 
-  describe("has a field `cmd`", function()
-    local auto = require "luauto"
+  pending("`user`", function()
+    truthy(luauto.user)
+  end)
+end)
 
-    pending("is a table which has has wrappers for some API functions", function()
+
+
+local autocmd, augroup = luauto.cmd, luauto.group
+
+describe("a table to manage autocmds", function()
+  describe("has a field", function()
+    pending('\"del\"', function()
     end)
 
-    pending("which can be called like `vim.api.nvim_create_autocmd()`", function()
-      local id = auto.cmd("BufEnter",{
-        command = 'echo "Hello! Testing!"',
-      })
-      assert.is_true(type(id) == "number")
+    pending('\"get\"', function()
     end)
 
-    pending("which can be called with a Vim command as the second arg to create an autocmd", function()
-      local id = auto.cmd("BufEnter", 'echo "Hello! Testing!"')
-      assert.is_true(type(id) == "number")
+    pending('\"exec\"', function()
+    end)
+
+    pending('\"clear\"', function()
     end)
   end)
 
-  describe("has a function `cb`", function()
-    local auto = require "luauto"
-
-    pending("to create an autocmd with by specifying a callback func as second arg", function()
-      local id = auto.cb("VimEnter", function() vim.cmd.echo "Hello! Testing!" end)
-      assert.is_true(type(id) == "number")
+  describe("can", function()
+    pending("delete by id", function()
     end)
 
-    pending("which parallels the calling `cmd` as a function", function()
-      local id1 = auto.cmd("VimEnter", 'echo "Hello! Testing!"', {
-        desc = "created for testing",
-        once = true,
-      })
+    pending("clear those matching given some criteria", function()
+    end)
 
-      local id2 = auto.cb("VimEnter", function() vim.cmd.echo "Hello! Testing!" end, {
-        desc = "also created for testing",
-        once = true,
-      })
+    pending("execute those matching given some criteria for event(s)", function()
+    end)
 
-      assert.is_true(type(id2) == "number")
-      assert.is_true(type(id1) == "number")
+    pending("get a list of those that match given some criteria", function()
     end)
   end)
 
-  describe("has a field `group`", function()
+  pending("is callable and can create them", function()
+  end)
+end)
+
+
+describe("create autocmds", function()
+  describe("given args `event` and `action`", function()
+    pending("which can be a callback as a Lua function", function()
+    end)
+
+    pending("which can be a Vim command as a string prefixed with \":\"", function()
+    end)
   end)
 
-  describe("has a field `event`", function()
+  pending("and return their id", function()
+  end)
+end)
+
+
+describe("a table indexable by event names", function()
+  pending("returns a table that representing that event", function()
   end)
 
-  describe("has a field `user`", function()
+  pending("is case-insensitive", function()
+  end)
+end)
+
+
+describe("a table representing an event", function()
+  describe("has a field", function()
+    pending("`get`", function()
+    end)
+
+    pending("`clear`", function()
+    end)
+
+    pending("`info`", function()
+    end)
+
+    pending("`exec`", function()
+    end)
+
+    pending("`ignore`", function()
+    end)
+  end)
+
+  describe("can", function()
+    pending("clear autocmds for the event", function()
+    end)
+
+    pending("get autocmds for the event", function()
+    end)
+
+    pending("execute autocmds for the event", function()
+    end)
+
+    pending("see if the event is ignored by checking the `eventignore` option", function()
+    end)
+
+    pending("set the event to be ignored", function()
+    end)
+  end)
+end)
+
+
+describe("a table indexable by autogroup names", function()
+  pending("returns a table that representing that autogroup", function()
+  end)
+
+  pending("is case-sensitive", function()
+  end)
+end)
+
+
+describe("a table representing an autogroup", function()
+  describe("has a field", function()
+    pending("`define`", function()
+    end)
+
+    pending("`create`", function()
+    end)
+
+    pending("`get`", function()
+    end)
+
+    pending("`clear`", function()
+    end)
+
+    pending("`info`", function()
+    end)
+
+    pending("`del`", function()
+    end)
+
+    pending("`id`", function()
+    end)
+  end)
+
+  describe("can", function()
+    pending("delete the autogroup", function()
+    end)
+
+    pending("clear the autogroup", function()
+    end)
+
+    pending("create it if it doesn't exist", function()
+    end)
+
+    pending("get its id", function()
+    end)
+  end)
+end)
+
+
+describe("define autogroups", function()
+  pending("given a variable number of lists of arguments for creating autocmds", function()
+  end)
+
+  pending("given a spec function that creates autocmds", function()
+  end)
+
+  pending("returns the ids of the created autocmds", function()
+  end)
+end)
+
+
+describe("an autogroup's spec function", function()
+  describe("uses one table parameter", function()
+    pending("indexable by event names and returns functions", function()
+    end)
+
+    pending("to create autocmds in the body of the function", function()
+    end)
+  end)
+
+  describe("is used as an argument to a function that defines autogroups", function()
+    pending("which provides the value for ", function()
+    end)
+  end)
+end)
+
+
+describe("an autogroup's \"events\" table", function()
+  pending("is private to the table representing the autogroup", function()
+  end)
+
+  pending("is indexable by event names", function()
+  end)
+
+  pending("returns functions that create an autocmd for the specified event and autogroup", function()
+  end)
+
+  pending("is used as the arg when calling an autogroup spec func", function()
+  end)
+end)
+
+
+describe("create and add autocmds to an existing autogroup", function()
+  pending("the same way you defined it", function()
+  end)
+
+  pending("using another spec function", function()
   end)
 end)
