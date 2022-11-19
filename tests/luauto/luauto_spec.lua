@@ -2,8 +2,8 @@ local luauto = require "luauto"
 
 local truthy = assert.is_truthy
 local falsy = assert.is_falsy
-local works = assert.has_no.errors
-local stops_working = assert.has_errors
+local ok = assert.has_no.errors
+local not_ok = assert.has_errors
 local same = assert.are_same              -- deep comparison
 local eq = assert.is_equal                -- compare by value or by reference
 
@@ -31,22 +31,42 @@ end)
 local autocmd, augroup = luauto.cmd, luauto.group
 
 describe("a table to manage autocmds", function()
-  describe("has a field", function()
-    pending('\"del\"', function()
+  describe("has", function()
+    it("'del'", function()
+      truthy(autocmd.del)
     end)
 
-    pending('\"get\"', function()
+    it("'get'", function()
+      truthy(autocmd.get)
     end)
 
-    pending('\"exec\"', function()
+    it("'exec'", function()
+      truthy(autocmd.exec)
     end)
 
-    pending('\"clear\"', function()
+    it("'clear'", function()
+      truthy(autocmd.clear)
     end)
   end)
 
   describe("can", function()
     pending("delete by id", function()
+      local cb = function() vim.notify "Welcome" end
+      local id = api.nvim_create_autocmd("VimEnter", {
+        callback = cb, 
+      })
+      truthy(id)
+      ok(function()
+        autocmd:del(id)
+      end)
+      local cmds, found = api.nvim_get_autocmds { event = "VimEnter" }, false
+      for _, c in ipairs(cmds) do
+        if c.id == id then
+          found = true
+          break
+        end
+      end
+      assert.is_false(found)
     end)
 
     pending("clear those matching given some criteria", function()
@@ -60,52 +80,105 @@ describe("a table to manage autocmds", function()
   end)
 
   pending("is callable and can create them", function()
+    local id
+    ok(function()
+      id = autocmd("ColorScheme", function()
+        vim.notify "Nice rice!"
+      end, { desc = "created with luauto", })
+    end)
+    local cmds, found = api.nvim_get_autocmds { event = "ColorScheme" }, false
+    for _, c in ipairs(cmds) do
+      if c.id == id then
+        found = true
+        break
+      end
+    end
+    assert.is_true(found)
   end)
 end)
 
 
 describe("create autocmds", function()
-  describe("given args `event` and `action`", function()
-    pending("which can be a callback as a Lua function", function()
-    end)
-
-    pending("which can be a Vim command as a string prefixed with \":\"", function()
-    end)
+  pending("and return their id", function()
   end)
 
-  pending("and return their id", function()
+  describe("given args `event` and `action`", function()
+    pending("which can be a Lua callback function", function()
+      local id
+      ok(function()
+        id = autocmd("CmdwinEnter", function()
+          vim.notify "No one has ever exited this mode, please place your computer in the nearest bathtub"
+        end, { once = true })
+      end)
+      truthy(id)
+    end)
+
+    pending("which can be a Vim command string prefixed with `:`", function()
+      local id
+      ok(function()
+        id = autocmd("QuitPre", ":write", { 
+          desc = "save before quiting",
+          once = true
+        })
+      end)
+      truthy(id)
+    end)
   end)
 end)
 
 
 describe("a table indexable by event names", function()
-  pending("returns a table that representing that event", function()
+  pending("returns a 'proxy object' for the event", function()
+    local e = autocmd.VimEnter
+    truthy(e)
+    assert.is_true(type(e) == "table")
   end)
 
-  pending("is case-insensitive", function()
+  pending("has case-insensitive keys", function()
+    local tbl = autocmd.BufEnter
+    local also_tbl = autocmd.bufenter
+    eq(tbl, also_tbl)
   end)
 end)
 
 
-describe("a table representing an event", function()
-  describe("has a field", function()
-    pending("`get`", function()
+describe("an event proxy", function()
+  local event = autocmd.TextYankPost
+
+  describe("has", function()
+    pending("a method `get`", function()
+      local get = event.get
+      assert.is_true(type(get) == "function")
     end)
 
-    pending("`clear`", function()
+    pending("a method `clear`", function()
+      local clear = event.clear
+      assert.is_true(type(clear) == "function")
     end)
 
-    pending("`info`", function()
+    pending("a method `info`", function()
+      local info = event.info
+      assert.is_true(type(info) == "function")
     end)
 
-    pending("`exec`", function()
+    pending("a method `exec`", function()
+      local exec = event.exec
+      assert.is_true(type(exec) == "function")
     end)
 
-    pending("`ignore`", function()
+    pending("a field `ignore` with a boolean value", function()
+      assert.is_true(type(event.ignore) == "boolean")
     end)
   end)
 
   describe("can", function()
+    pending("return some info in a table", function()
+      local info = event.info
+      assert.is_true(type(info) == "table")
+      truthy(info.event)
+      assert.is_true(type(info.event) == "string")
+    end)
+
     pending("clear autocmds for the event", function()
     end)
 
@@ -115,7 +188,7 @@ describe("a table representing an event", function()
     pending("execute autocmds for the event", function()
     end)
 
-    pending("see if the event is ignored by checking the `eventignore` option", function()
+    pending("be used to check if the event is listed in the `eventignore` option", function()
     end)
 
     pending("set the event to be ignored", function()
@@ -125,7 +198,7 @@ end)
 
 
 describe("a table indexable by autogroup names", function()
-  pending("returns a table that representing that autogroup", function()
+  pending("returns a 'proxy object' for the autogroup", function()
   end)
 
   pending("is case-sensitive", function()
@@ -133,27 +206,27 @@ describe("a table indexable by autogroup names", function()
 end)
 
 
-describe("a table representing an autogroup", function()
-  describe("has a field", function()
-    pending("`define`", function()
+describe("an autogroup proxy", function()
+  describe("has", function()
+    pending("a method `define`", function()
     end)
 
-    pending("`create`", function()
+    pending("a method `create`", function()
     end)
 
-    pending("`get`", function()
+    pending("a method `get`", function()
     end)
 
-    pending("`clear`", function()
+    pending("a method `clear`", function()
     end)
 
-    pending("`info`", function()
+    pending("a method `info`", function()
     end)
 
-    pending("`del`", function()
+    pending("a method `del`", function()
     end)
 
-    pending("`id`", function()
+    pending("a field `id` with an integer value", function()
     end)
   end)
 
@@ -185,16 +258,24 @@ describe("define autogroups", function()
 end)
 
 
-describe("an autogroup's spec function", function()
-  describe("uses one table parameter", function()
-    pending("indexable by event names and returns functions", function()
+describe("an autogroup spec function", function()
+  pending("creates autocmds in an autogroup", function()
+  end)
+
+  describe("takes one argument", function()
+    describe("which is a table", function()
+      pending("that has a method to clear the autogroup", function()
+      end)
+
+      pending("that returns functions when indexed with event names", function()
+      end)
     end)
 
-    pending("to create autocmds in the body of the function", function()
+    pending("which it uses to create the autocmds", function()
     end)
   end)
 
-  describe("is used as an argument to a function that defines autogroups", function()
+  describe("is used as an argument to an autogroup proxy's methods", function()
     pending("which provides the value for ", function()
     end)
   end)
