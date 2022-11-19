@@ -1,4 +1,5 @@
 local luauto = require "luauto"
+local autocmd, augroup = luauto.cmd, luauto.group
 
 local truthy = assert.is_truthy
 local falsy = assert.is_falsy
@@ -12,45 +13,83 @@ local pp = vim.pretty_print
 
 
 
-describe("has submodules", function()
-  it("`cmd`", function()
+describe("has a submodule", function()
+  it("'cmd'", function()
     truthy(luauto.cmd)
   end)
 
-  it("`group`", function()
+  it("'group'", function()
     truthy(luauto.group)
   end)
 
-  pending("`user`", function()
+  pending("'user'", function()
     truthy(luauto.user)
   end)
 end)
 
 
 
-local autocmd, augroup = luauto.cmd, luauto.group
+describe("example snippet:", function()
+  it("create an autocmd to highlight on yank", function()
+    autocmd.TextYankPost(function()
+      vim.highlight.on_yank {
+        timeout = 200,
+        on_macro = true
+      }
+    end, { desc = "hl on yank example" })
+    -- end snippet
+
+    local cmds, found = autocmd.TextYankPost:get(), false
+    for _, c in ipairs(cmds) do
+      if c.desc == "hl on yank example" then
+        found = true
+        break
+      end
+    end
+    assert.is_true(found)
+  end)
+
+  it("defining an autogroup that toggles `cursorline`", function()
+    -- "~/.config/nvim/init.lua" or somewhere like that
+    local auto = require "luauto"
+    local autocmd, augroup = auto.cmd, auto.group
+
+    local toggle = function(b) return (function() vim.opt.cul = b end) end
+
+    augroup.cursorline(function(au)
+      au.WinEnter(toggle(true))
+      au.WinLeave(toggle(false))
+    end)
+    -- end snippet
+
+    local cmds = augroup.cursorline:get()
+    assert.is_true(#cmds == 2)
+  end)
+end)
+
+
 
 describe("a table to manage autocmds", function()
   describe("has", function()
-    it("'del'", function()
+    it("a method 'del'", function()
       truthy(autocmd.del)
     end)
 
-    it("'get'", function()
+    it("a method 'get'", function()
       truthy(autocmd.get)
     end)
 
-    it("'exec'", function()
+    it("a method 'exec'", function()
       truthy(autocmd.exec)
     end)
 
-    it("'clear'", function()
+    it("a method 'clear'", function()
       truthy(autocmd.clear)
     end)
   end)
 
   describe("can", function()
-    pending("delete by id", function()
+    pending("delete one given an id", function()
       local cb = function() vim.notify "Welcome" end
       local id = api.nvim_create_autocmd("VimEnter", {
         callback = cb, 
@@ -100,6 +139,10 @@ end)
 
 describe("create autocmds", function()
   pending("and return their id", function()
+    local id
+    local cb = function() return true end
+    ok(function() id = autocmd("User", cb) end)
+    truthy(id)
   end)
 
   describe("given args `event` and `action`", function()
