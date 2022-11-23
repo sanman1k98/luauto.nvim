@@ -1,112 +1,112 @@
-local M = {}
-local Event = {}
-local info = setmetatable({}, { __mode = "v" })
+local event_mt = {}
+local scoped_events_mt = {}
 
-local au = require "luauto.cmd"
+local attr = setmetatable({}, { __mode = "k" })
+local mem = setmetatable({}, { __mode = "v" })
 
+local a, validate = vim.api, vim.validate
 
-function Event:_proxy(name)
-  local proxy = {}
-  info[proxy] = name
-  return setmetatable(proxy, self)
-end
+---@class event @An object to manage autocmds for this event.
+---@field clear method:
+---@field exec method:
+---@field get method:
 
-
-function Event:create_cmd(opts)
-  return vim.api.nvim_create_autocmd(info[self], opts)
-end
-
-
---- Execute all autocommands for this event matching opts.
-function Event:exec(opts)
-  opts = opts or {}
-  vim.api.nvim_exec_autocmds(info[self], opts)
-end
-
-
---- Get all autocommands for this event matching opts.
-function Event:get_cmds(opts)
-  opts = opts or {}
-  opts.event = info[self]
-  return vim.api.nvim_get_autocmds(opts)
-end
-
-
---- Clear all autocommands for this event matching opts.
-function Event:clear(opts)
-  opts = opts or {}
-  opts.event = info[self]
-  vim.api.nvim_clear_autocmds(opts)
-end
-
-
-function Event:is_ignored()
-  for _, event in ipairs(vim.opt.eventignore:get()) do
-    event = string.lower(event)
-    if event == info[self] then
-      return true
-    end
-  end
-  return false
-end
-
-
-function Event:set_ignore(flag)
-  if flag then vim.opt.eventignore:append(info[self])
-  else vim.opt.eventignore:remove(info[self]) end
-end
-
-
-function Event:get_name()
-  return info[self]
-end
-
-
-function Event:__index(k)
-  if k == "name" then
-    return Event.get_name(self)
-  elseif k == "ignore" then
-    return Event.is_ignored(self)
+local function scoped_opts(self, opts)
+  if not opts then opts = attr[self].opts
   else
-    local v = Event[k]
-    rawset(self, k, v)
-    return v
+    opts.group = attr[self].opts.group
+    opts.buffer = attr[self].opts.buffer
   end
+  return opts
+end
+ 
+---@see nvim_get_autocmds()
+function event_mt:get(opts)
+  validate { opts = { opts, "t", true } }
+  opts = scoped_opts(self, opts)
+  opts.event = attr[self].name
+  return a.nvim_get_autocmds(opts)
 end
 
+---@see nvim_exec_autocmds()
+function event_mt:exec(opts)
+  validate { opts = { opts, "t", true } }
+  return a.nvim_exec_autocmds(attr[self].name, scoped_opts(self, opts))
+end
 
-function Event:__newindex(k, v)
-  if k == "name" then
-    error("attempting to modify a read-only field", 2)
-  elseif k == "ignore" then
-    Event.set_ignore(self, v)
+---@see nvim_clear_autocmds()
+function event_mt:clear(opts)
+  validate { opts = { opts, "t", true } }
+  opts = scoped_opts(self, opts)
+  opts.event = attr[self].name
+  return a.nvim_clear_autocmds(opts)
+end
+
+--- Create an autocmd for event.
+---@param action function|string: a Vim command prefixed with ":", or a callback func
+---@param opts table|nil: a dictionary of autocmd options
+---@return id number: integer id of the created autocmd
+---@see nvim_create_autocmd()
+function event_mt:__call(action, opts)
+  validate {
+    action = { action, {"s", "f"} },
+    opts = { opts, "t", true },
+  }
+  opts = scoped_opts(self, opts)
+  if type(action) == "string" and action[1] == ":" then
+    opts.command = action:sub(2)
   else
-    rawset(self, k, v)
+    opts.callback = action
   end
+  return a.nvim_create_autocmd(attr[self].name, opts)
 end
 
+event_mt.__index = event_mt
 
---- Shorthand for creating an autocommand for the event.
-function Event:__call(...)
-  return Event.create_cmd(self, ...)
+
+---@param k string: name of an event
+---@return event: a table for the event
+function scoped_events_mt:__index(k)
+  local event = rawget(self, k:lower())
+  if not event then
+    event = {}
+    attr[event] = { name = k, opts = attr[self] }
+    event = setmetatable(event, event_mt)
+    rawset(self, k:lower(), event)
+  end
+  rawset(self, k, event)
+  return event
 end
 
+scoped_events_mt.__mode = "v"
 
---- Index this module by event names, which are case-insensitive.
-return setmetatable(M, {
-  --- Contains logic for search and accessing values with case-insensitive
-  --- keys.
-  __index = function(self, key)
-    local proxy = rawget(self, key:lower())   -- see what's at lowercased-key
-    if proxy then                             -- if there's something there then,
-      rawset(self, key, proxy)                -- set this key's value to what's at lowercased-key
-      return proxy                            -- return the value
-    else                                      -- if there's nothing there then,
-      proxy = Event:_proxy(key:lower())        -- create a value
-      rawset(self, key:lower(), proxy)        -- set the lowercased-key to the new value
-      rawset(self, key, proxy)                -- set the original key to the new value too, since we might access it again this way
-      return proxy                            -- return the value
-    end
-  end,
-  __mode = "v",
-})
+---@param group string|nil: name of an autogroup
+---@param buffer number|nil: a buffer number
+---@return string: a key to index memoized results in the "mem" table
+local function keygen(group, buffer)
+  if not (group or buffer) then return "aug END" end
+  local augroup = ("aug %s"):format(group or "END")
+  local buffer = opts.buffer and (" <buffer=%d>"):format(buffer) or ""
+  return augroup .. buffer
+end
+
+--- Get a table that is used to manage autocmds using event names within the
+--- default autogroup, or if specified, a different autogroup and/or a
+--- specific buffer number. Can also create autocmds.
+---@param group string|nil: name of an autogroup
+---@param buffer number|nil: a buffer number
+---@return table: used to manage and create autocmds
+local function get_scoped_events(group, buffer)
+  validate {
+    group = { group, "s", true },
+    buffer = { buffer, "n", true },
+  }
+  local key = keygen(group, buffer)
+  if mem[key] then return mem[key] end
+  local scoped = {}
+  mem[key] = scoped
+  attr[scoped] = { group = group, buffer = buffer }
+  return setmetatable(scoped, scoped_events_mt)
+end
+
+return get_scoped_events
