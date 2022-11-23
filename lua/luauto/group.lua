@@ -1,12 +1,15 @@
 local group_mt = {}
 
-local mem = setmetatable({}, { __mode = "v" })
 local attr = setmetatable({}, { __mode = "k" })
 
 local a, validate = vim.api, vim.validate
 
-local events = require "luauto.events"
 
+---@class autocmd @A table for managing autocmds.
+---@field get function:
+---@field exec function:
+---@field clear function:
+---@field <event> table:
 
 
 
@@ -41,7 +44,7 @@ end
 function group_mt:get(opts)
   validate { opts = { opts, "t", true } }
   opts = opts or {}
-  opts.group = atrr[self].name
+  opts.group = attr[self].name
   return a.nvim_get_autocmds(opts)
 end
 
@@ -63,9 +66,7 @@ function group_mt:__index(k)
   elseif k == "au" or k == "autocmd" then
     return attr[self].autocmd
   else
-    local v = rawget(group_mt, k)
-    rawset(self, k, v)
-    return v
+    return rawget(group_mt, k)
   end
 end
 
@@ -80,6 +81,7 @@ end
 
 
 function group_mt:__call(...)
+  local arg = {...}
   group_mt.create(self)
   local au = attr[self].autocmd
   local spec = ...
@@ -87,26 +89,32 @@ function group_mt:__call(...)
     return spec(au)
   else
     for _, cmd in ipairs{...} do
-      assert(type(cmd) == "table")
+      assert(type(cmd) == "table", "expecting arguments to be tables")
       au(cmd[1], cmd[2], cmd[3])
     end
   end
 end
 
 
-local function get_group(name)
-  if mem[name] then return mem[name] end
-  local group = {}
-  mem[name] = group
-  attr[group] = { name = name }
-  local au = setmetatable({}, { })
-  attr[group].au = au
-  return setmetatable(group, group_mt)
+local function create_scoped_autocmd(group)
+  local autocmd = {}
+  function autocmd:clear(...) return group_mt.clear(group, ...) end
+  function autocmd:get(...) return group_mt.get(group, ...) end
+  function autocmd:exec(...) group_mt.exec(group, ...) end
+  return setmetatable(autocmd, {
+    __index = require("luauto.events")(attr[group].name),
+    __call = function(_, event, action, opts)
+    end,
+  })
 end
 
 return setmetatable({}, {
   __index = function(self, k)
-
+    local group = {}
+    rawset(self, k, group)
+    attr[group] = { name = k }
+    attr[group].autocmd = create_scoped_autocmd(group)
+    return setmetatable(group, group_mt)
   end,
   __mode = "v",
 })
