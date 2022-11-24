@@ -30,7 +30,7 @@ end)
 
 
 describe("example snippet:", function()
-  it("create an autocmd to highlight on yank", function()
+  it("highlight on yank", function()
     autocmd.TextYankPost(function()
       vim.highlight.on_yank {
         timeout = 200,
@@ -49,16 +49,17 @@ describe("example snippet:", function()
     assert.is_true(found)
   end)
 
-  it("defining an autogroup that toggles `cursorline`", function()
+  it("toggle `cursorline` when entering and leaving windows", function()
     -- "~/.config/nvim/init.lua" or somewhere like that
-    local auto = require "luauto"
-    local autocmd, augroup = auto.cmd, auto.group
-
-    local toggle = function(b) return (function() vim.opt.cul = b end) end
+    local set_cul = function(val)
+      local cb = function() vim.opt.cul = val end
+      return cb
+    end
 
     augroup.cursorline(function(au)
-      au.WinEnter(toggle(true))
-      au.WinLeave(toggle(false))
+      au:clear()                        -- clears the current augroup "cursorline"
+      au.WinEnter(set_cul(true))
+      au.WinLeave(set_cul(false))
     end)
     -- end snippet
 
