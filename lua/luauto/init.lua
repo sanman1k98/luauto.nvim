@@ -184,6 +184,8 @@ end
 function group_mt:__index(k)
   if k == "id" then
     return group_mt.create(self)
+  elseif k == "name" or k == "group_name" then
+    return attr[self].group_name
   elseif k == "au" or k == "autocmd" then
     return attr[self].autocmd
   else
@@ -192,8 +194,12 @@ function group_mt:__index(k)
 end
 
 function group_mt:__newindex(k, v)
-  if k == "id" or k == "au" or k == "autocmd" then
-    error("attempting to modify a read-only field", 2)
+  if k == "id"
+    or k == "name"
+    or k == "group_name"
+    or k == "au"
+    or k == "autocmd"
+    then error("attempting to modify a read-only field", 2)
   else
     rawset(self, k, v)
   end
