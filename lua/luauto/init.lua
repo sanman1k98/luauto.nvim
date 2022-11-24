@@ -242,6 +242,20 @@ do
     })
   end
 
+  -- TODO: extract into a function that when given a name, returns an augroup
+  -- table with metatable `group_mt`.
+  --
+  -- Support passing "default", "end", and "END" as args to create an augroup
+  -- table for the default group.
+  --
+  --
+  --
+  -- I'm thinking about this because at this point, we're creating an "autocmd"
+  -- table for every group object that we create, and the "autocmd" table in
+  -- this module is pretty much the same thing but for the default group. I
+  -- think it's okay to be a little clever here and flesh out the logic for
+  -- creating an augroup object and its "autocmd" table, then use it for this
+  -- module.
   M.group = setmetatable(augroup, {
     __index = function(self, k)
       if mem[k] then return mem[k] end
