@@ -1,7 +1,9 @@
+local M = {}
+
 local autocmd = {}
 
-local events = {}
-local event_mt, eventlist_mt = {}, {}
+local events;
+local eventobj_mt, events_mt = {}, {}
 
 local augroup = {}
 local group_mt = {}
@@ -41,7 +43,7 @@ local function scoped_opts(self, opts)
 end
  
 ---@see nvim_get_autocmds()
-function event_mt:get(opts)
+function eventobj_mt:get(opts)
   validate { opts = { opts, "t", true } }
   opts = scoped_opts(self, opts)
   opts.event = attr[self].name
@@ -49,13 +51,13 @@ function event_mt:get(opts)
 end
 
 ---@see nvim_exec_autocmds()
-function event_mt:exec(opts)
+function eventobj_mt:exec(opts)
   validate { opts = { opts, "t", true } }
   return a.nvim_exec_autocmds(attr[self].name, scoped_opts(self, opts))
 end
 
 ---@see nvim_clear_autocmds()
-function event_mt:clear(opts)
+function eventobj_mt:clear(opts)
   validate { opts = { opts, "t", true } }
   opts = scoped_opts(self, opts)
   opts.event = attr[self].name
@@ -67,13 +69,13 @@ end
 ---@param opts table|nil: a dictionary of autocmd options
 ---@return id number: integer id of the created autocmd
 ---@see nvim_create_autocmd()
-function event_mt:__call(action, opts)
+function eventobj_mt:__call(action, opts)
   return autocmd:create(attr[self].name, action, scoped_opts(self, opts))
 end
 
 event_mt.__index = event_mt
 
-function eventlist_mt:__index(k)
+function events_mt:__index(k)
   local event = rawget(self, k:lower())
   if not event then
     event = {}
@@ -81,14 +83,14 @@ function eventlist_mt:__index(k)
       name = k,
       scope = attr[self]
     }
-    event = setmetatable(event, event_mt)
+    event = setmetatable(event, eventobj_mt)
     rawset(self, k:lower(), event)
   end
   rawset(self, k, event)
   return event
 end
 
-eventlist_mt.__mode = "v"
+events_mt.__mode = "v"
 
 do
   local mem = setmetatable({}, { __mode = "v" })
@@ -104,17 +106,17 @@ do
     return augroup .. buffer
   end
 
-  events = setmetatable(events, {
-    __call = function(_, scope)
-      validate { scope = { scope, "t", true } }
-      local key = keygen(scope)
-      if mem[key] then return mem[key] end
-      local eventlist = {}
-      mem[key] = eventlist
-      attr[eventlist] = scope or {}
-      return setmetatable(eventlist, eventlist_mt)
-    end,
-  })
+  local function get_events(scope)
+    validate { scope = { scope, "t", true } }
+    local key = keygen(scope)
+    if mem[key] then return mem[key] end
+    local t = {}
+    mem[key] = t
+    attr[t] = scope or {}
+    return setmetatable(t, events_mt)
+  end
+
+  events = get_events
 end
 
 
@@ -124,7 +126,7 @@ function autocmd:del(...) a.nvim_del_autocmd(...) end
 function autocmd:exec(...) a.nvim_exec_autocmds(...) end
 function autocmd:get(...) return a.nvim_get_autocmds(...) end
 
-autocmd = setmetatable(autocmd, {
+M.cmd = setmetatable(autocmd, {
   __index = events(nil),
   __call = autocmd.create,
 })
@@ -226,7 +228,7 @@ do
     })
   end
 
-  augroup = setmetatable(augroup, {
+  M.group = setmetatable(augroup, {
     __index = function(self, k)
       local group = {}
       attr[group] = { group_name = k }
@@ -239,8 +241,5 @@ do
 end
 
 
-return {
-  cmd = autocmd,
-  group = augroup,
-  events = events,
-}
+
+return M
