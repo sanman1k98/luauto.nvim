@@ -64,6 +64,14 @@ function eventobj_mt:clear(opts)
   return a.nvim_clear_autocmds(opts)
 end
 
+function eventobj_mt:__index(k)
+  if k == "name" or k == "event_name" then
+    return attr[self].name
+  else
+    return rawget(eventobj_mt, k)
+  end
+end
+
 --- Create an autocmd for event.
 ---@param action function|string: a Vim command prefixed with ":", or a callback func
 ---@param opts table|nil: a dictionary of autocmd options
@@ -72,8 +80,6 @@ end
 function eventobj_mt:__call(action, opts)
   return autocmd:create(attr[self].name, action, scoped_opts(self, opts))
 end
-
-event_mt.__index = event_mt
 
 function events_mt:__index(k)
   local event = rawget(self, k:lower())
