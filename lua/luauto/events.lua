@@ -6,16 +6,19 @@ local mem = setmetatable({}, { __mode = "v" })
 
 local a, validate = vim.api, vim.validate
 
----@class event @An object to manage autocmds for this event.
----@field clear method:
----@field exec method:
----@field get method:
+---@class event @An object to manage autocmds for an event.
+---@field clear method: clear autocmds for this event
+---@field exec method: execute autocmds for this event
+---@field get method: get autocmds for this event
+
+---@class scoped_events @A table to manage autocmds for events in a specified scope.
+---@field <event> event:
 
 local function scoped_opts(self, opts)
-  if not opts then opts = attr[self].opts
+  if not opts then opts = attr[self].scope
   else
-    opts.group = attr[self].opts.group
-    opts.buffer = attr[self].opts.buffer
+    opts.group = attr[self].scope.group
+    opts.buffer = attr[self].scope.buffer
   end
   return opts
 end
@@ -70,7 +73,7 @@ function scoped_events_mt:__index(k)
   local event = rawget(self, k:lower())
   if not event then
     event = {}
-    attr[event] = { name = k, opts = attr[self] }
+    attr[event] = { name = k, scope = attr[self] }
     event = setmetatable(event, event_mt)
     rawset(self, k:lower(), event)
   end
@@ -80,33 +83,32 @@ end
 
 scoped_events_mt.__mode = "v"
 
----@param group string|nil: name of an autogroup
----@param buffer number|nil: a buffer number
+---@param scope table|nil: the scope in which to create, clear, get, and exec autocmds for each event
+---@field group string|nil: name of an autogroup
+---@field buffer number|nil: a buffer number
 ---@return string: a key to index memoized results in the "mem" table
-local function keygen(group, buffer)
-  if not (group or buffer) then return "aug END" end
-  local augroup = ("aug %s"):format(group or "END")
-  local buffer = buffer and (" <buffer=%d>"):format(buffer) or ""
+local function events_keygen(scope)
+  if not scope then return "aug END" end
+  local augroup = ("aug %s"):format(scope.group or "END")
+  local buffer = scope.buffer and (" <buffer=%d>"):format(scope.buffer) or ""
   return augroup .. buffer
 end
 
 --- Get a table that is used to manage autocmds using event names within the
 --- default autogroup, or if specified, a different autogroup and/or a
 --- specific buffer number. Can also create autocmds.
----@param group string|nil: name of an autogroup
----@param buffer number|nil: a buffer number
+---@param scope table|nil: the scope in which to create, clear, get, and exec autocmds for each event
+---@field group string|nil: name of an autogroup
+---@field buffer number|nil: a buffer number
 ---@return table: used to manage and create autocmds
-local function get_scoped_events(group, buffer)
-  validate {
-    group = { group, "s", true },
-    buffer = { buffer, "n", true },
-  }
-  local key = keygen(group, buffer)
+local function get_events(scope)
+  validate { scope = { scope, "t", true } }
+  local key = events_keygen(scope)
   if mem[key] then return mem[key] end
-  local scoped = {}
-  mem[key] = scoped
-  attr[scoped] = { group = group, buffer = buffer }
-  return setmetatable(scoped, scoped_events_mt)
+  local events = {}
+  mem[key] = events
+  attr[events] = { group = scope.group, buffer = scope.buffer }
+  return setmetatable(events, scoped_events_mt)
 end
 
-return get_scoped_events
+return get_events

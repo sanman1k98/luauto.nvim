@@ -96,13 +96,13 @@ function group_mt:__call(...)
 end
 
 
-local function create_scoped_autocmd(group)
+local function scoped_autocmd(group)
   local autocmd = {}
   function autocmd:clear(...) return group_mt.clear(group, ...) end
   function autocmd:get(...) return group_mt.get(group, ...) end
   function autocmd:exec(...) group_mt.exec(group, ...) end
   return setmetatable(autocmd, {
-    __index = require("luauto.events")(attr[group].name),
+    __index = require("luauto.events") { group = attr[group].name },
     __call = function(_, event, action, opts)
     end,
   })
@@ -113,7 +113,7 @@ return setmetatable({}, {
     local group = {}
     rawset(self, k, group)
     attr[group] = { name = k }
-    attr[group].autocmd = create_scoped_autocmd(group)
+    attr[group].autocmd = scoped_autocmd(group)
     return setmetatable(group, group_mt)
   end,
   __mode = "v",

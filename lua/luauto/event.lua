@@ -64,7 +64,7 @@ end
 event_mt.__index = event_mt
 
 
----@param k string: name of an event
+---@param k string: name of an event (case-insensitive)
 ---@return event: a table for the event
 function scoped_events_mt:__index(k)
   local event = rawget(self, k:lower())
@@ -86,7 +86,7 @@ scoped_events_mt.__mode = "v"
 local function keygen(group, buffer)
   if not (group or buffer) then return "aug END" end
   local augroup = ("aug %s"):format(group or "END")
-  local buffer = opts.buffer and (" <buffer=%d>"):format(buffer) or ""
+  local buffer = buffer and (" <buffer=%d>"):format(buffer) or ""
   return augroup .. buffer
 end
 
