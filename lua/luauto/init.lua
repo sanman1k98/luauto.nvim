@@ -220,6 +220,8 @@ function group_mt:__call(...)
 end
 
 do
+  local mem = setmetatable({}, { __mode = "v" })
+
   local function create_autocmd_tbl(group)
     local au = {}
     attr[au] = { group_name = attr[group].group_name }
@@ -242,13 +244,13 @@ do
 
   M.group = setmetatable(augroup, {
     __index = function(self, k)
+      if mem[k] then return mem[k] end
       local group = {}
+      mem[k] = group
       attr[group] = { group_name = k }
       attr[group].autocmd = create_autocmd_tbl(group)
-      self[k] = group
       return setmetatable(group, group_mt)
     end,
-    __mode = "v",
   })
 end
 
