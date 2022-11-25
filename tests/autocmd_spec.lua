@@ -27,9 +27,6 @@ describe("a table to manage autocmds", function()
 
     pending("'exec'", function()
     end)
-
-    pending("''", function()
-    end)
   end)
 
   describe("has a read-only attribute", function()

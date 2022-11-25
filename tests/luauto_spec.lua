@@ -16,10 +16,12 @@ local pp = vim.pretty_print
 describe("has a field", function()
   it("'cmd'", function()
     truthy(luauto.cmd)
+    assert.table(luauto.cmd)
   end)
 
   it("'group'", function()
     truthy(luauto.group)
+    assert.table(luauto.group)
   end)
 end)
 
@@ -60,6 +62,6 @@ describe("example usage:", function()
     -- end snippet
 
     local cmds = augroup.cursorline:get()
-    assert.is_true(#cmds == 2)
+    eq(#cmds, 2)
   end)
 end)
