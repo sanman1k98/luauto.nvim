@@ -54,7 +54,7 @@ describe("example usage:", function()
       return cb
     end
 
-    augroup.cursorline(function(au)
+    augroup.cursorline:define(function(au)
       au:clear()                        -- clears the current augroup "cursorline"
       au.WinEnter(set_cul(true))
       au.WinLeave(set_cul(false))
