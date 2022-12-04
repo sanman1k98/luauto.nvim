@@ -1,110 +1,128 @@
-local augroup = require("luauto").group
+local au = require "luauto"
 
 local helpers = require "tests.helpers"
 local api = helpers.api
+local pp = vim.pretty_print
 
 local truthy = assert.is_truthy
 local falsy = assert.is_falsy
+
 local ok = assert.has_no.errors
 local not_ok = assert.has_errors
+
 local same = assert.are_same              -- deep comparison
 local eq = assert.is_equal                -- compare by value or by reference
-local pp = vim.pretty_print
 
 
 
 describe("a table to manage an augroup", function()
-
-  local testgroup = augroup.testgroup
+  local testgroup = au.group.testgroup
 
   describe("has a method", function()
-    pending("'create'", function()
+    it("'create'", function()
       truthy(testgroup.create)
       assert.is_function(testgroup.create)
     end)
 
-    pending("'clear'", function()
+    it("'clear'", function()
       truthy(testgroup.clear)
       assert.is_function(testgroup.clear)
     end)
 
-    pending("'get'", function()
+    it("'get'", function()
       truthy(testgroup.get)
       assert.is_function(testgroup.get)
     end)
 
-    pending("'del'", function()
+    it("'del'", function()
       truthy(testgroup.del)
       assert.is_function(testgroup.del)
     end)
-
-    pending("'exec'", function()
-      truthy(testgroup.exec)
-      assert.is_function(testgroup.exec)
-    end)
-
-    pending("'define'", function()
-      truthy(testgroup.define)
-      assert.is_function(testgroup.define)
-    end)
   end)
 
-  describe("has a read-only property", function()
-    pending("'id'", function()
+  describe("has a property", function()
+    it("'id'", function()
       truthy(testgroup.id)
       assert.number(testgroup.id)
-      not_ok(function()
-        testgroup.id = 0
-      end)
     end)
 
-    pending("'name'", function()
-      truthy(testgroup.name)
-      assert.string(testgroup.name)
-      not_ok(function()
-        testgroup.name = "testgroup2"
-      end)
+    it("'_au'", function()
+      truthy(testgroup._au)
+      assert.table(testgroup._au)
     end)
 
-    pending("'scope'", function()
-      truthy(testgroup.scope)
-      assert.table(testgroup.scope)
-      not_ok(function()
-        testgroup.scope = {}
-      end)
-    end)
-
-    pending("'autocmd'", function()
-      truthy(testgroup.autocmd)
-      assert.table(testgroup.autocmd)
-      not_ok(function()
-        testgroup.autocmd = {}
-      end)
+    it("'_ctx'", function()
+      truthy(testgroup._ctx)
+      assert.table(testgroup._ctx)
     end)
   end)
 
   describe("can", function()
-    pending("create it", function()
+    before_each(function()
+      helpers.clear_all "testgroup"
     end)
 
-    pending("clear its autocmds", function()
+    it("create it", function()
+      api.del_augroup_by_name("testgroup")
+
+      not_ok(function()
+        api.get_autocmds({ group = "testgroup" })
+      end)
+
+      testgroup:create()
+
+      same({}, api.get_autocmds({ group = "testgroup" }))
     end)
 
-    pending("get its autocmds", function()
+    it("clear its autocmds", function()
+      testgroup:create()
+
+      helpers.create_test_autocmds("testgroup")
+      eq(10, #api.get_autocmds({ group = "testgroup" }))
+
+      testgroup:clear()
+      eq(0, #api.get_autocmds({ group = "testgroup" }))
     end)
 
-    pending("define its autocmds", function()
+    it("get its autocmds", function()
+      helpers.create_test_autocmds "testgroup"
+
+      eq(10, #testgroup:get())
     end)
 
-    pending("delete it", function()
+    it("define its autocmds", function()
+      au.group.testgroup(function(au)
+        au.WinEnter(function() end)
+        au.WinLeave(function() end)
+        au.BufEnter(function() end)
+      end)
+
+      eq(3, #au.group.testgroup:get())
+    end)
+
+    it("delete it", function()
+      helpers.create_test_autocmds "testgroup"
+
+      au.group.testgroup:del()
     end)
   end)
 
-  describe("has a table to manage its autocmds", function()
-    pending("which has the same scope", function()
+  describe("has an object to manage its autocmds", function()
+    it("which has the same '_ctx' table", function()
+      local augroup = au.group.testgroup
+      local autocmd = augroup._au
+
+      same(augroup._ctx, autocmd._ctx)
+      eq(augroup._ctx, autocmd._ctx)
     end)
 
-    pending("which is the same one used when defining the augroup's autocmds", function()
+    it("which is the same one used when defining the augroup's autocmds", function()
+      local augroup = au.group.testgroup
+      local autocmd = augroup._au
+
+      augroup(function(au)
+        eq(au, autocmd)
+      end)
     end)
   end)
 end)
