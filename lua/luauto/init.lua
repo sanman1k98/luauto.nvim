@@ -149,13 +149,7 @@ end
 
 --      augroup methods
 
-function Augroup:__index(k)
-  if k == "id" then         -- return group id number
-    return a.nvim_create_augroup(self._ctx.group, { clear = false })
-  else
-    return Augroup[k]
-  end
-end
+Augroup.__index = Augroup
 
 --- Define autocommands in the augroup by calling it with a spec function as
 --- the argument. It will call |nvim_create_augroup()|, then calls your spec
