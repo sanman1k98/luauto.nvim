@@ -29,6 +29,11 @@ describe("a table to manage an augroup", function()
       assert.is_function(testgroup.clear)
     end)
 
+    it("'exists'", function()
+      truthy(testgroup.exists)
+      assert.is_function(testgroup.exists)
+    end)
+
     it("'get'", function()
       truthy(testgroup.get)
       assert.is_function(testgroup.get)
@@ -41,11 +46,6 @@ describe("a table to manage an augroup", function()
   end)
 
   describe("has a property", function()
-    it("'id'", function()
-      truthy(testgroup.id)
-      assert.number(testgroup.id)
-    end)
-
     it("'_au'", function()
       truthy(testgroup._au)
       assert.table(testgroup._au)
@@ -59,7 +59,19 @@ describe("a table to manage an augroup", function()
 
   describe("can", function()
     before_each(function()
+      -- create 10 User autocmds in the group "testgroup"
+      helpers.create_test_autocmds "testgroup"
+    end)
+
+    after_each(function()
+      -- clear all autocmds in group "testgroup" and in the default group
       helpers.clear_all "testgroup"
+    end)
+
+    it("check if it exists", function()
+      assert.is_true(testgroup:exists())
+      api.del_augroup_by_name "testgroup"
+      assert.is_false(testgroup:exists())
     end)
 
     it("create it", function()
@@ -75,22 +87,19 @@ describe("a table to manage an augroup", function()
     end)
 
     it("clear its autocmds", function()
-      testgroup:create()
-
-      helpers.create_test_autocmds("testgroup")
       eq(10, #api.get_autocmds({ group = "testgroup" }))
-
       testgroup:clear()
       eq(0, #api.get_autocmds({ group = "testgroup" }))
     end)
 
     it("get its autocmds", function()
-      helpers.create_test_autocmds "testgroup"
-
       eq(10, #testgroup:get())
     end)
 
     it("define its autocmds", function()
+      api.del_augroup_by_name "testgroup"
+
+      -- calling the group will create it before running the given spec
       au.group.testgroup(function(au)
         au.WinEnter(function() end)
         au.WinLeave(function() end)
@@ -101,9 +110,10 @@ describe("a table to manage an augroup", function()
     end)
 
     it("delete it", function()
-      helpers.create_test_autocmds "testgroup"
-
       au.group.testgroup:del()
+      not_ok(function()
+        api.get_autocmds({ group = "testgroup" })
+      end)
     end)
   end)
 
