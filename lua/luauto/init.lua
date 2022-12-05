@@ -23,8 +23,6 @@ local function merge_opts(...)
   local opts = vim.tbl_extend("force", ...)
   if opts.buffer and opts.pattern then
     error("cannot specify a pattern for a buf-local autocmd", 2)
-  elseif opts.buffer == true or opts.buffer == 0 then
-    opts.buffer = a.nvim_get_current_buf()
   end
   return opts
 end
