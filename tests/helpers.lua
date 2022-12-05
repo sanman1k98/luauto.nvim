@@ -9,8 +9,10 @@ M.api = setmetatable({}, {
 })
 
 function M.clear_all(group)
-  M.api.clear_autocmds { group = group }
-  M.api.clear_autocmds {}
+  if group then
+    M.api.create_augroup(group, { clear = true })
+  end
+  M.api.clear_autocmds({ group = nil })
 end
 
 function M.get_test_autocmds(group)
