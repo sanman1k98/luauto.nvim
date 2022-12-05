@@ -161,12 +161,21 @@ function Augroup:__call(spec)
   return spec(self._au)
 end
 
-function Augroup:create(opts)
-  validate { opts = { opts, "t", true } }
-  opts = opts or { clear = false }
-  return a.nvim_create_augroup(self._ctx.group, opts)
+--- Check if a group with this name exists.
+---@return boolean: false if deleted or not created
+function Augroup:exists()
+  local res = pcall(a.nvim_get_autocmds, { group = self._ctx.group })
+  return (res)  -- adjusted to one result
 end
 
+--- Create the group.
+---@param clear boolean|nil: defaults to false; clear the group if it already exists
+---@return number: the id of the group
+function Augroup:create(clear)
+  return a.nvim_create_augroup(self._ctx.group, { clear = (clear == true) })
+end
+
+--- Delete the group
 function Augroup:del()
   a.nvim_del_augroup_by_name(self._ctx.group)
 end
