@@ -62,17 +62,22 @@ end
 --      autocmd methods
 
 function Autocmd:__index(k)
-  if k == "buf" then
+  local method = rawget(Autocmd, k)
+
+  if method then
+    return method
+  elseif k == "buf" then 
+    -- create table indexable by bufnr
     return setmetatable({ _ctx = self._ctx }, {
-      __index = function(t, buffer)
-        validate { buffer = { buffer, {"b", "n"} } }
-        return create_autocmd_object(merge_opts(t._ctx, { buffer = buffer }))
+      __index = function(t, bufnr)
+        local ctx = merge_opts(t._ctx, { buffer = bufnr })  -- use key to specify buffer
+        return create_autocmd_object(ctx)                   -- return Autocmd obj with buffer
       end,
     })
-  else
-    validate { k = { k, {"s", "t"} } }
-    return Autocmd[k] or create_event_object(k, self._ctx)
   end
+
+  -- use key to get an Event object
+  return create_event_object(k, self._ctx)
 end
 
 ---@param opts opts: optional dictionary of autocommand options
@@ -90,17 +95,16 @@ end
 --      event and pattern proxy methods
 
 function Event:__index(k)
-  -- check if key is a method name
-  local v = Event[k]
-  if v then return v end
+  local method = rawget(Event, k)
 
-  -- check if we can specify the pattern
-  if not (self._ctx.buffer or self._ctx.pattern) then
-    local ctx = merge_opts(self._ctx, { pattern = k })
-    return create_event_object(self._event, ctx)
+  if method then
+    return method
+  elseif self._ctx.pattern or self._ctx.buffer then
+    return nil  -- no nested objects
   end
 
-  return nil
+  local ctx = merge_opts(self._ctx, { pattern = k })    -- use key to specify pattern
+  return create_event_object(self._event, ctx)          -- return Event obj with pattern
 end
 
 --- Create an autocmd for the event or events.
@@ -152,8 +156,10 @@ end
 Augroup.__index = Augroup
 
 --- Define autocommands in the augroup by calling it with a spec function as
---- the argument. It will call |nvim_create_augroup()|, then calls your spec
---- function with an Autocmd object that has the group anemas the only argument.
+--- the argument. It will call |nvim_create_augroup()|, then call your spec
+--- function with a single argument which is an Autocmd object that will pass
+--- in the group name when you call its methods.
+--
 ---@param spec function: a function that defines one parameter which is used in the body to create autocmds
 function Augroup:__call(spec)
   validate { spec = { spec, "f" } }
