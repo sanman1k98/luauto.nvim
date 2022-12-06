@@ -191,7 +191,9 @@ Augroup.clear = Autocmd.clear
 
 
 
-local M = create_autocmd_object({})
+local M = {}
+
+M.cmd = create_autocmd_object({})
 
 M.group = setmetatable({}, {
   __index = function(_, name)

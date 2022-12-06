@@ -1,4 +1,5 @@
 local au = require "luauto"
+local autocmd, augroup = au.cmd, au.group
 
 local spy = require "luassert.spy"
 
@@ -20,17 +21,17 @@ local same = assert.are_same
 describe("a table to manage autocmds", function()
   describe("has a function", function()
     it("'clear'", function()
-      assert.is_function(au.clear)
+      assert.is_function(autocmd.clear)
     end)
 
     it("'get'", function()
-      assert.is_function(au.get)
+      assert.is_function(autocmd.get)
     end)
   end)
 
   describe("has a property", function()
     it("'_ctx'", function()
-      truthy(au._ctx)
+      truthy(autocmd._ctx)
     end)
   end)
 
@@ -40,7 +41,7 @@ describe("a table to manage autocmds", function()
     it("create them", function()
       local action = function() end
 
-      local id = au.WinEnter(action)
+      local id = autocmd.WinEnter(action)
       assert.number(id)
 
       eq(1, #api.get_autocmds({ event = "WinEnter" }))
@@ -51,15 +52,15 @@ describe("a table to manage autocmds", function()
       helpers.create_test_autocmds()
 
       assert.is_true(#api.get_autocmds({ event = "User" }) > 1)
-      au.User:clear()
+      autocmd.User:clear()
       eq(0, #api.get_autocmds({ event = "User" }))
     end)
 
     it("execute all those for a given event or events", function()
       local cb = function() end
       local s = spy.new(cb)
-      au.User.testpat(cb)
-      au.User:exec()
+      autocmd.User.testpat(cb)
+      autocmd.User:exec()
       vim.schedule_wrap(assert.spy(s).was_called)
     end)
 
@@ -67,13 +68,13 @@ describe("a table to manage autocmds", function()
       -- create 10 User autocmds with patterns and descriptions
       helpers.create_test_autocmds("testing")
 
-      local User_autocmds = au:get({ event = "User" })
+      local User_autocmds = autocmd:get({ event = "User" })
       eq(10, #User_autocmds)
 
-      local also_User_autocmds = au.User:get()
+      local also_User_autocmds = autocmd.User:get()
       eq(10, #also_User_autocmds)
 
-      local matches = au.User.testpattern9:get()
+      local matches = autocmd.User.testpattern9:get()
       eq(1, #matches)
     end)
 
@@ -81,10 +82,10 @@ describe("a table to manage autocmds", function()
       local events
       ok(function()
         events = {
-          au.VimEnter,
-          au.User,
-          au.BufLeave,
-          au.InsertEnter,
+          autocmd.VimEnter,
+          autocmd.User,
+          autocmd.BufLeave,
+          autocmd.InsertEnter,
         }
       end)
       eq("VimEnter", events[1]._event)
@@ -93,7 +94,7 @@ describe("a table to manage autocmds", function()
     it("index itself with a table containing multiple events", function()
       local obj
       assert.has_no.errors(function()
-         obj = au[{
+         obj = autocmd[{
           "VimEnter",
           "User",
           "BufLeave",

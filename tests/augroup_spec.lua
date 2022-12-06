@@ -1,4 +1,5 @@
 local au = require "luauto"
+local autocmd, augroup = au.cmd, au.group
 
 local helpers = require "tests.helpers"
 local api = helpers.api
@@ -16,7 +17,7 @@ local eq = assert.is_equal                -- compare by value or by reference
 
 
 describe("a table to manage an augroup", function()
-  local testgroup = au.group.testgroup
+  local testgroup = augroup.testgroup
 
   describe("has a method", function()
     it("'create'", function()
@@ -100,7 +101,7 @@ describe("a table to manage an augroup", function()
       api.del_augroup_by_name "testgroup"
 
       -- calling the group will create it before running the given spec
-      au.group.testgroup(function(au)
+      augroup.testgroup(function(au)
         au.WinEnter(function() end)
         au.WinLeave(function() end)
         au.BufEnter(function() end)
@@ -110,7 +111,7 @@ describe("a table to manage an augroup", function()
     end)
 
     it("delete it", function()
-      au.group.testgroup:del()
+      augroup.testgroup:del()
       not_ok(function()
         api.get_autocmds({ group = "testgroup" })
       end)
@@ -119,19 +120,19 @@ describe("a table to manage an augroup", function()
 
   describe("has an object to manage its autocmds", function()
     it("which has the same '_ctx' table", function()
-      local augroup = au.group.testgroup
-      local autocmd = augroup._au
+      local aug_obj = augroup.testgroup
+      local au_obj = aug_obj._au
 
-      same(augroup._ctx, autocmd._ctx)
-      eq(augroup._ctx, autocmd._ctx)
+      same(aug_obj._ctx, au_obj._ctx)
+      eq(aug_obj._ctx, au_obj._ctx)
     end)
 
     it("which is the same one used when defining the augroup's autocmds", function()
-      local augroup = au.group.testgroup
-      local autocmd = augroup._au
+      local aug = augroup.testgroup
+      local au_obj = aug._au
 
-      augroup(function(au)
-        eq(au, autocmd)
+      aug(function(au)
+        eq(au, au_obj)
       end)
     end)
   end)

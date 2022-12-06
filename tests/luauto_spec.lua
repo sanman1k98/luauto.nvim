@@ -1,4 +1,5 @@
 local au = require "luauto"
+local autocmd, augroup = au.cmd, au.group
 
 local helpers = require "tests.helpers"
 local pp = vim.pretty_print
@@ -27,7 +28,7 @@ end)
 describe("example usage:", function()
   it("highlight on yank", function()
     -- begin snippet
-    au.TextYankPost(function()
+    autocmd.TextYankPost(function()
       vim.highlight.on_yank {
         timeout = 200,
         on_macro = true
@@ -35,7 +36,7 @@ describe("example usage:", function()
     end, { desc = "hl on yank example" })
     -- end snippet
 
-    local cmds, found = au.TextYankPost:get(), false
+    local cmds, found = autocmd.TextYankPost:get(), false
     for _, c in ipairs(cmds) do
       if c.desc == "hl on yank example" then
         found = true
@@ -52,27 +53,27 @@ describe("example usage:", function()
       return cb
     end
 
-    au.group.cursorline(function(au)
+    augroup.cursorline(function(au)
       au:clear()                    -- calls 'nvim_clear_autocmds({ group = "cursorline" })
       au.WinEnter(set_cul(true))
       au.WinLeave(set_cul(false))
     end)
     -- end snippet
 
-    local cmds = au.group.cursorline:get()
+    local cmds = augroup.cursorline:get()
     eq(#cmds, 2)
   end)
 
   it("source and recompile packer when you save your 'init.lua'", function()
     -- adapted from 'nvim-lua/kickstart.nvim'
-    au.group.Packer(function(au)
+    augroup.Packer(function(au)
       au:clear()
       local pattern = vim.fn.expand("$MYVIMRC")
       au.BufWritePost[pattern](":source <afile> | PackerCompile")
     end)
     -- end snippet
 
-    local cmds = au.group.Packer:get()
+    local cmds = augroup.Packer:get()
     eq(1, #cmds)
     truthy(cmds[1].command)
   end)
