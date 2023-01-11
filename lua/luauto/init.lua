@@ -201,4 +201,9 @@ M.group = setmetatable({}, {
   end,
 })
 
+function M.setup()
+  _G.vim.autocmd = M.cmd
+  _G.vim.augroup = M.group
+end
+
 return M
