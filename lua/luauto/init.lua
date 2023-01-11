@@ -5,18 +5,18 @@ local Augroup = {}
 
 local a, validate = vim.api, vim.validate
 
----@class opts @Dictionary of autocommand options.
----@field group string|number|nil: group name or id
----@field buffer number|boolean|nil: true for the current buffer or a specific buffer number
----@field pattern string|nil: pattern or patterns
----@field desc string|nil: description of the autocommand
----@field once boolean|nil: run the autocommand only once (defaults to false)
----@field nested boolean|nil: run nested autocommands (default to false)
+---@class AutocmdOptions @Dictionary of autocommand options.
+---@field group? string|number group name or id
+---@field buffer? number|boolean specifies a buffer; use 0 or true for the current buffer
+---@field pattern? string|string[] pattern or list of patterns
+---@field desc? string description of the autocommand
+---@field once? boolean run the autocommand only once (defaults to false)
+---@field nested? boolean run nested autocommands (defaults to false)
 
----@class context
----@field group string|number|nil: group name or id
----@field buffer number|boolean|nil: true for the current buffer or a specific buffer number
----@field pattern string|nil: pattern or patterns
+---@class AutocmdContext @Autocommand options passed from parent objects.
+---@field group? string|number group name or id
+---@field buffer? number|boolean specifies a buffer; use 0 or true for the current buffer
+---@field pattern? string|string[] pattern or list of patterns
 
 ---@private
 local function merge_opts(...)
@@ -31,7 +31,7 @@ end
 
 --      constructors
 
----@param ctx context
+---@param ctx AutocmdContext
 ---@private
 local function create_autocmd_object(ctx)
   local self = {
@@ -80,13 +80,13 @@ function Autocmd:__index(k)
   return create_event_object(k, self._ctx)
 end
 
----@param opts opts: optional dictionary of autocommand options
+---@param opts AutocmdOptions: optional dictionary of autocommand options
 function Autocmd:get(opts)
   validate { opts = { opts, "t", true } }
   return a.nvim_get_autocmds(merge_opts(opts or {}, self._ctx))
 end
 
----@param opts opts: optional dictionary of autocommand options
+---@param opts AutocmdOptions: optional dictionary of autocommand options
 function Autocmd:clear(opts)
   validate { opts = { opts, "t", true } }
   a.nvim_clear_autocmds(merge_opts(opts or {}, self._ctx))
