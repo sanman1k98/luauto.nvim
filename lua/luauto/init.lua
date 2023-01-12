@@ -229,8 +229,22 @@ function Augroup:del()
   a.nvim_del_augroup_by_name(self._ctx.group)
 end
 
-Augroup.get = Autocmd.get
 Augroup.clear = Autocmd.clear
+--- Get a list of autocommands in the group that match any given criteria. If
+--- no argument is passed and the group has not yet been created, it will
+--- return nil. Otherwise it behaves like `Autocmd:get()`.
+---@param opts? AutocmdFilter
+---@see nvim_get_autocmds()
+function Augroup:get(opts)
+  if not opts then
+    local exists, list = pcall(a.nvim_get_autocmds, { group = self._ctx.group })
+    return exists and list or nil
+  else
+    opts.group = self._ctx.group
+    return a.nvim_get_autocmds(opts)
+  end
+end
+
 
 
 
