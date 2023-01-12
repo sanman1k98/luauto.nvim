@@ -1,22 +1,56 @@
-
-local Autocmd = {}
-local Event = {}
-local Augroup = {}
-
-local a, validate = vim.api, vim.validate
-
----@class AutocmdOptions @Dictionary of autocommand options.
----@field group? string|number group name or id
+---@class Context @Autocommand options passed from parent objects.
+---@field group? string group name or id
 ---@field buffer? number|boolean specifies a buffer; use 0 or true for the current buffer
 ---@field pattern? string|string[] pattern or list of patterns
+
+---@class AutocmdOptions: Context @Dictionary of autocommand options.
 ---@field desc? string description of the autocommand
 ---@field once? boolean run the autocommand only once (defaults to false)
 ---@field nested? boolean run nested autocommands (defaults to false)
 
----@class AutocmdContext @Autocommand options passed from parent objects.
----@field group? string|number group name or id
----@field buffer? number|boolean specifies a buffer; use 0 or true for the current buffer
----@field pattern? string|string[] pattern or list of patterns
+---@class AutocmdCallbackArg
+---@field id integer
+---@field event string
+---@field group? integer
+---@field match string
+---@field buf? integer
+---@field file? string
+---@field data any
+
+---@alias EventName string|string[]
+---@alias PatternName string|string[]
+---@alias Pattern Event has a pattern specified in its context
+---@alias BuflocalAutocmd Autocmd|{[integer]:BuflocalAutocmd?} has a buffer specified in its context
+
+---@class Autocmd @Indexable by event name. Can also get and clear autocommands.
+---@field private _ctx Context passed to Event objects
+---@field buf BuflocalAutocmd
+---@field get function
+---@field clear function
+local Autocmd = {}
+
+---@class Event: {[PatternName]: Pattern?} @Create, get, exec, and clear autocommands for an event. Can be indexed further to specify a pattern.
+---@field private _event EventName
+---@field private _ctx Context
+---@field __call function create an autocommand for this event
+---@field get function
+---@field exec function
+---@field clear function
+local Event = {}
+
+---@alias AugroupSpec fun(au: Autocmd)
+
+---@class Augroup
+---@field private _au Autocmd used to create autocommands
+---@field private _ctx Context has group specified
+---@field __call function define autocommands in this group
+---@field get function
+---@field del function
+---@field clear function
+---@field create function
+local Augroup = {}
+
+local a, validate = vim.api, vim.validate
 
 ---@private
 local function merge_opts(...)
@@ -31,7 +65,8 @@ end
 
 --      constructors
 
----@param ctx AutocmdContext
+---@param ctx Context
+---@return Autocmd
 ---@private
 local function create_autocmd_object(ctx)
   local self = {
@@ -40,6 +75,10 @@ local function create_autocmd_object(ctx)
   return setmetatable(self, Autocmd)
 end
 
+---@param event EventName
+---@param ctx Context
+---@return Event
+---@private
 local function create_event_object(event, ctx)
   local self = {
     _event = event,
@@ -48,6 +87,8 @@ local function create_event_object(event, ctx)
   return setmetatable(self, Event)
 end
 
+---@param name string
+---@return Augroup
 local function create_augroup_object(name)
   local ctx = { group = name }
   local self = {
@@ -61,12 +102,13 @@ end
 
 --      autocmd methods
 
+---@return function|Event|BuflocalAutocmd
 function Autocmd:__index(k)
   local method = rawget(Autocmd, k)
 
   if method then
     return method
-  elseif k == "buf" then 
+  elseif k == "buf" then
     -- create table indexable by bufnr
     return setmetatable({ _ctx = self._ctx }, {
       __index = function(t, bufnr)
@@ -108,8 +150,9 @@ function Event:__index(k)
 end
 
 --- Create an autocmd for the event or events.
+---@param self Event: a callback or command to be executed when the autocommand triggers
 ---@param action string|function: a callback or command to be executed when the autocommand triggers
----@param opts table}nil:
+---@param opts? AutocmdOptions
 function Event:__call(action, opts)
   validate {
     action = { action, {"s", "f"} },
