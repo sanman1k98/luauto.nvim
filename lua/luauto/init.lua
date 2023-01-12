@@ -251,7 +251,6 @@ function Augroup:del()
   a.nvim_del_augroup_by_name(self._ctx.group)
 end
 
-Augroup.clear = Autocmd.clear
 --- Get a list of autocommands in the group that match any given criteria. If
 --- no argument is passed and the group has not yet been created, it will
 --- return nil. Otherwise it behaves like `Autocmd:get()`.
@@ -267,6 +266,20 @@ function Augroup:get(opts)
   end
 end
 
+--- Clears autocommands in this group that match the given criteria. When
+--- called without arguments, it is an alias to |nvim_create_augroup()| where
+--- `clear` is set to true.
+---@param opts? AutocmdFilter
+---@see Autocmd.clear
+---@see nvim_create_augroup()
+---@overload fun(): integer
+function Augroup:clear(opts)
+  if not opts then
+    return a.nvim_create_augroup(self._ctx.group, { clear = true })
+  end
+  opts.group = self._ctx.group
+  a.nvim_clear_autocmds(opts)
+end
 
 
 
