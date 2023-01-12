@@ -89,8 +89,13 @@ describe("a table to manage an augroup", function()
 
     it("clear its autocmds", function()
       eq(10, #api.get_autocmds({ group = "testgroup" }))
-      testgroup:clear()
+      local id = testgroup:clear()  -- group id
+      assert.number(id)
       eq(0, #api.get_autocmds({ group = "testgroup" }))
+      -- behaves like Autocmd:clear() when called with args
+      local opts = {}
+      local ret = testgroup:clear(opts)
+      assert.is_falsy(ret)
     end)
 
     it("get its autocmds", function()
