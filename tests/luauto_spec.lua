@@ -87,4 +87,15 @@ describe("example usage:", function()
     eq(1, #cmds)
     truthy(cmds[1].command)
   end)
+
+  it("check whether to reload the file", function()
+    autocmd[{ "FocusGained", "TermClose", "TermLeave" }](":checktime", {
+      desc = "check whether to reload the file",
+    })
+
+    local cmds = autocmd.FocusGained:get()
+    eq(1, #cmds)
+    eq("checktime", cmds[1].command)
+    eq("check whether to reload the file", cmds[1].desc)
+  end)
 end)
