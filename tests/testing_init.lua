@@ -1,6 +1,6 @@
 -- manually add to runtimepath
-vim.opt.runtimepath:append(".")
-vim.cmd.packadd "plenary.nvim"
+vim.opt.rtp:append(".")
+vim.opt.rtp:prepend(vim.env.XDG_DATA_HOME.."/nvim/lazy/plenary.nvim")
 
 
 -- the `vim.cmd.runtime` call searches the runtimepath for a "plenary.vim"
