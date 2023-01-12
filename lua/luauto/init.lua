@@ -161,7 +161,7 @@ function Event:__call(action, opts)
 
   opts = merge_opts(opts or {}, self._ctx)
 
-  if type(action) == "string" and action[1] == ":" then
+  if type(action) == "string" and action:sub(1, 1) == ":" then
     opts.command = action:sub(2)
   else
     opts.callback = action
