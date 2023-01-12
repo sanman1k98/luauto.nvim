@@ -1,5 +1,5 @@
 ---@class Context @Autocommand options passed from parent objects.
----@field group? string group name or id
+---@field group? string group name
 ---@field buffer? number|boolean specifies a buffer; use 0 or true for the current buffer
 ---@field pattern? string|string[] pattern or list of patterns
 
@@ -7,6 +7,12 @@
 ---@field desc? string description of the autocommand
 ---@field once? boolean run the autocommand only once (defaults to false)
 ---@field nested? boolean run nested autocommands (defaults to false)
+
+---@class AutocmdFilter @A table with key-value pairs to filter autocommands.
+---@field group? string|integer group name or id
+---@field buffer? integer|integer[] buffer or list of buffer numbers
+---@field pattern? string|string[] pattern or list of patterns
+---@field event? string|string[] event or list of events
 
 ---@class AutocmdCallbackArg
 ---@field id integer
@@ -38,7 +44,7 @@ local Autocmd = {}
 ---@field clear function
 local Event = {}
 
----@alias AugroupSpec fun(au: Autocmd)
+---@alias AugroupSpec fun(au: Autocmd): any
 
 ---@class Augroup
 ---@field private _au Autocmd used to create autocommands
@@ -122,13 +128,18 @@ function Autocmd:__index(k)
   return create_event_object(k, self._ctx)
 end
 
----@param opts AutocmdOptions: optional dictionary of autocommand options
+--- Get autocommands that match the given criteria.
+---@param opts AutocmdFilter table of key-value pairs to specify which autocommands to return
+---@return table #list of autocommands
+---@see nvim_get_autocmds()
 function Autocmd:get(opts)
   validate { opts = { opts, "t", true } }
   return a.nvim_get_autocmds(merge_opts(opts or {}, self._ctx))
 end
 
----@param opts AutocmdOptions: optional dictionary of autocommand options
+--- Clear autocommands that match the given criteria.
+---@see nvim_clear_autocmds()
+---@param opts AutocmdFilter table of key-value pairs to specify what autocommands to clear.
 function Autocmd:clear(opts)
   validate { opts = { opts, "t", true } }
   a.nvim_clear_autocmds(merge_opts(opts or {}, self._ctx))
@@ -149,10 +160,10 @@ function Event:__index(k)
   return create_event_object(self._event, ctx)          -- return Event obj with pattern
 end
 
---- Create an autocmd for the event or events.
----@param self Event: a callback or command to be executed when the autocommand triggers
----@param action string|function: a callback or command to be executed when the autocommand triggers
+--- Create an autocommand for this Event.
+---@param action string|fun(e?:AutocmdCallbackArg):true? a Lua function, a Vim command prepended with ":", or a Vimscript function name
 ---@param opts? AutocmdOptions
+---@see nvim_create_autocmd()
 function Event:__call(action, opts)
   validate {
     action = { action, {"s", "f"} },
@@ -170,8 +181,16 @@ function Event:__call(action, opts)
   return a.nvim_create_autocmd(self._event, opts)
 end
 
+---@class AutocmdExecOpts
+---@field group? string|integer group name or id to match against
+---@field patterm? string|string[]
+---@field buffer? integer
+---@field modeline? boolean default to true
+---@field data? any arbitrary data to send to an autocommand callback handler
+
 --- Execute autocmds matching this event or events
----@param opts table|nil:
+---@param opts? AutocmdExecOpts
+---@see nvim_exec_autocmds()
 function Event:exec(opts)
   validate { opts = { opts, "t", true } }
   opts = merge_opts(opts or {}, self._ctx)
@@ -179,7 +198,9 @@ function Event:exec(opts)
 end
 
 --- Get autocmds for the event
----@param opts table|nil:
+---@param opts AutocmdFilter
+---@see Autocmd.get()
+---@see nvim_get_autocmds()
 function Event:get(opts)
   validate { opts = { opts, "t", true } }
   opts = merge_opts(opts or {}, self._ctx)
@@ -203,7 +224,7 @@ Augroup.__index = Augroup
 --- function with a single argument which is an Autocmd object that will pass
 --- in the group name when you call its methods.
 --
----@param spec function: a function that defines one parameter which is used in the body to create autocmds
+---@param spec AugroupSpec a function that defines one parameter which is used in the body to create autocmds
 function Augroup:__call(spec)
   validate { spec = { spec, "f" } }
   a.nvim_create_augroup(self._ctx.group, { clear = false })
@@ -225,6 +246,7 @@ function Augroup:create(clear)
 end
 
 --- Delete the group
+---@see nvim_del_augroup_by_name()
 function Augroup:del()
   a.nvim_del_augroup_by_name(self._ctx.group)
 end
