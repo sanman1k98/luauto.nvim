@@ -21,6 +21,16 @@ describe("has a field", function()
     truthy(luauto.group)
     assert.table(luauto.group)
   end)
+
+  it("'cmd'", function()
+    truthy(luauto.cmd)
+    assert.table(luauto.cmd)
+  end)
+
+  it("'setup'", function()
+    truthy(luauto.setup)
+    assert.is_function(luauto.setup)
+  end)
 end)
 
 
