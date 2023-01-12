@@ -1,5 +1,5 @@
-local au = require "luauto"
-local autocmd, augroup = au.cmd, au.group
+local luauto = require "luauto"
+local autocmd, augroup = luauto.cmd, luauto.group
 
 local helpers = require "tests.helpers"
 local pp = vim.pretty_print
@@ -18,8 +18,8 @@ local eq = assert.is_equal                -- compare by value or by reference
 
 describe("has a field", function()
   it("'group'", function()
-    truthy(au.group)
-    assert.table(au.group)
+    truthy(luauto.group)
+    assert.table(luauto.group)
   end)
 end)
 

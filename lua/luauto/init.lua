@@ -22,7 +22,7 @@
 ---@alias Pattern Event has a pattern specified in its context
 ---@alias BuflocalAutocmd Autocmd|{[integer]:BuflocalAutocmd?} has a buffer specified in its context
 
----@class Autocmd @Indexable by event name. Can also get and clear autocommands.
+---@class Autocmd: {[EventName]:Event} @Indexable by event name. Can also get and clear autocommands.
 ---@field private _ctx Context passed to Event objects
 ---@field buf BuflocalAutocmd
 ---@field get function
