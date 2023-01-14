@@ -295,8 +295,8 @@ M.group = setmetatable({}, {
 
 function M.setup(opts)
   opts = opts or {}
-  _G.vim.autocmd = opts.set_vim_autocmd ~= false and M.cmd or nil
-  _G.vim.augroup = opts.set_vim_augroup ~= false and M.group or nil
+  vim.autocmd = opts.set_vim_autocmd ~= false and M.cmd or nil
+  vim.augroup = opts.set_vim_augroup ~= false and M.group or nil
 end
 
 return M
