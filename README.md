@@ -5,10 +5,10 @@ A Lua module to manage autocommands and groups!
 ## Installing
 
 ```lua
--- using packer
-
-use {
-	"sanman1k98/luauto.nvim"
+-- using lazy.nvim
+{
+  "sanman1k98/luauto.nvim"
+  config = true,
 }
 ```
 
@@ -17,65 +17,55 @@ use {
 ### Examples
 
 ```lua
-local au = require "luauto"
-
 -- clearing all autocmds in the default group
-au:clear()
+vim.autocmd:clear()
 
 -- getting all autocmds in the default group
-au:get()
+vim.autocmd:get()
 
 -- creating an autocmd for an event
-au.TextYankPost(function()
-	vim.on_yank { timeout = 200 }
+vim.autocmd.TextYankPost(function()
+  vim.on_yank { timeout = 200 }
 end)
 
 -- getting autocmds for an event
-local cmds = au:get({ event = "TextYankPost" })
-local also_cmds = au.TextYankPost:get()
+local cmds = vim.autocmd:get({ event = "TextYankPost" })
+local also_cmds = vim.autocmd.TextYankPost:get()
 assert(#cmds == #also_cmds, "function calls are equivalent")
 
 -- clearing autocmds for an event
-au:clear({ event = "TextYankPost" })
-au.TextYankPost:clear() -- equivalent to above
+vim.autocmd:clear({ event = "TextYankPost" })
+vim.autocmd.TextYankPost:clear() -- equivalent to above
 
 -- executing a User event
-au.User:exec({ pattern = "SomePluginEvent" })
-au.User.SomePluginEvent:exec() -- equivalent to above
+vim.autocmd.User:exec({ pattern = "SomePluginEvent" })
+vim.autocmd.User.SomePluginEvent:exec() -- equivalent to above
 
 -- creating an autocmd for an event and pattern
-local pattern = vim.fn.expand("$MYVIMRC")
-au.BufWritePost[pattern] ":source <afile> | PackerCompile"
+vim.autocmd.User.LazyUpdate(function() vim.notify("Plugin updates available!") end)
 
 -- creating multiple autocmds in a new group
 local set_cul = function(val)
-	return (function() vim.opt.cul = val end)
+  return (function() vim.opt.cul = val end)
 end
 
-au.group.cursorline(function(au)
-	au:clear()                      -- clears the group
-	au.WinEnter(set_cul(true))      -- 
-	au.WinLeave(set_cul(false))
+vim.augroup.cursorline(function(au)
+  au:clear()                      -- clears the group
+  au.WinEnter(set_cul(true))
+  au.WinLeave(set_cul(false))
 end)
 
 -- getting the autocmds in a group
-local group_cmds = au.group.cursorline:get()
+local group_cmds = vim.augroup.cursorline:get()
 assert(#group_cmds == 2)
 
--- getting the id of a group
-local id = au.group.cursorline.id
-local also_id = au.group.cursorline:create()
-assert(id == also_id)
-
-
-
+local groupid = vim.augroup.cursorline:create()
+local also_group_cmds = vim.autocmd:get({ group = groupid })
 ```
-
-The luauto module is an object which
 
 ### The `Autocmd` object
 
-An `Autocmd` object is used to create, get, execute, and clear autocommands. The `luauto` module itself is an instance of this object, and has the following properties:
+An `Autocmd` object is used to create, get, execute, and clear autocommands. It has the following properties:
 - indexable by event name and returns `Event` objects
 - has a method `Autocmd:get()`
 - has a method `Autocmd:clear()`
@@ -87,7 +77,7 @@ For creating and executing autocommands, we index the object using event names a
 
 ```lua
 -- using string-notation
-‌Autocmd["VimEnter"]
+Autocmd["VimEnter"]
 
 -- using dot-notation
 Autocmd.VimEnter
@@ -97,5 +87,4 @@ Since Lua allows any type of value to be used as a key, we can pass in an array 
 
 ```lua
 Autocmd[{ "VimEnter", "VimLeave" }]
-
 ```
