@@ -25,7 +25,7 @@ vim.autocmd:get()
 
 -- creating an autocmd for an event
 vim.autocmd.TextYankPost(function()
-  vim.on_yank { timeout = 200 }
+  vim.highlight.on_yank { timeout = 200 }
 end)
 
 -- getting autocmds for an event
